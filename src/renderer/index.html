@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fr" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;
+        style-src 'self' 'unsafe-inline';
+        img-src 'self' data: blob:;
+        font-src 'self' data:;
+        media-src 'self' blob: vault: asset:;
+        connect-src 'self' http://localhost:5173 ws://localhost:5173;
+        frame-ancestors 'none';
+        base-uri 'self';
+      "
+    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>USB Video Vault — Control</title>
+  </head>
+  <body class="bg-[#0b0f14] text-gray-200">
+    <div id="root"></div>
+    <script type="module" src="./main_control.tsx"></script>
+    <!-- IPC Diagnostic Script -->
+    <script src="./ipc-diagnostic.js"></script>
+  </body>
+</html>

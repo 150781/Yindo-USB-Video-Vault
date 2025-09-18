@@ -1,0 +1,27 @@
+
+/// <reference path="../types/electron-api.d.ts" />
+import { contextBridge, ipcRenderer } from 'electron';
+
+const api: ElectronAPI = {
+  openDisplayWindow: (displayId?: number) => ipcRenderer.invoke('display:open', { displayId }),
+  closeDisplayWindow: () => ipcRenderer.invoke('display:close'),
+  getDisplays: () => ipcRenderer.invoke('display:getAll'),
+  toggleFullscreen: () => ipcRenderer.invoke('display:toggleFullScreen'),
+  switchDisplay: () => ipcRenderer.invoke('display:toggleScreen'),
+  ipc: {
+    send: (channel, payload) => ipcRenderer.send(channel, payload),
+    invoke: (channel, payload) => ipcRenderer.invoke(channel, payload),
+    on: (channel, listener) => {
+  const wrapped = (_ev: unknown, ...args: any[]) => listener(...args);
+      ipcRenderer.on(channel, wrapped);
+      return () => ipcRenderer.removeListener(channel, wrapped);
+    }
+  },
+  manifest: {
+    enterPassphrase: (pass: string) => ipcRenderer.invoke('manifest:enterPassphrase', pass),
+    clearPassphrase: () => ipcRenderer.invoke('manifest:clearPassphrase'),
+    list: () => ipcRenderer.invoke('manifest:list')
+  }
+};
+
+contextBridge.exposeInMainWorld('electron', api);

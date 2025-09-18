@@ -1,0 +1,118 @@
+import { protocol, app } from 'electron';
+import * as fs from 'fs';
+import * as fsp from 'fs/promises';
+import * as path from 'path';
+
+function resolveDemoPath(): string {
+  const dev = path.resolve(__dirname, '..', '..', 'assets', 'demo.mp4');
+  const prod = path.join(process.resourcesPath || process.cwd(), 'assets', 'demo.mp4');
+  return fs.existsSync(dev) ? dev : prod;
+}
+
+function parseRange(rangeHeader: string | undefined, fileSize: number) {
+  if (!rangeHeader) return null;
+  const m = /bytes=(\d*)-(\d*)/.exec(rangeHeader);
+  if (!m) return null;
+  let start = m[1] ? parseInt(m[1], 10) : 0;
+  let end = m[2] ? parseInt(m[2], 10) : fileSize - 1;
+
+  if (m[1] === '' && m[2] !== '') {
+    const suffix = parseInt(m[2], 10);
+    start = Math.max(fileSize - suffix, 0);
+    end = fileSize - 1;
+  }
+  if (start < 0) start = 0;
+  if (end >= fileSize) end = fileSize - 1;
+  if (start > end || start >= fileSize) return { invalid: true } as const;
+  return { start, end } as const;
+}
+
+export function registerVaultProtocol() {
+  app.whenReady().then(() => {
+    protocol.registerStreamProtocol('vault', async (request, callback) => {
+      try {
+        const url = new URL(request.url);
+        let filePath: string | undefined;
+
+        // vault://demo => sert demo.mp4
+        if (url.hostname === 'demo' || url.pathname === '/demo') {
+          filePath = resolveDemoPath();
+        }
+
+        if (!filePath) {
+          callback({
+            statusCode: 404,
+            headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' },
+            data: Buffer.alloc(0),
+          });
+          return;
+        }
+
+        const stat = await fsp.stat(filePath).catch(() => null);
+        if (!stat || !stat.isFile()) {
+          callback({
+            statusCode: 404,
+            headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' },
+            data: Buffer.alloc(0),
+          });
+          return;
+        }
+
+        const fileSize = stat.size;
+        const hdr: any = request.headers;
+        const rangeH =
+          (hdr?.Range as string | undefined) ?? (hdr?.range as string | undefined);
+
+        const range = parseRange(rangeH, fileSize);
+        if (range && (range as any).invalid) {
+          callback({
+            statusCode: 416,
+            headers: {
+              'Content-Range': `bytes */${fileSize}`,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'no-store',
+            },
+            data: Buffer.alloc(0),
+          });
+          return;
+        }
+
+        if (range) {
+          const { start, end } = range as { start: number; end: number };
+          const stream = fs.createReadStream(filePath, { start, end });
+          callback({
+            statusCode: 206,
+            headers: {
+              'Content-Type': 'video/mp4',
+              'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+              'Content-Length': String(end - start + 1),
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'no-store',
+            },
+            data: stream,
+          });
+          return;
+        }
+
+        const stream = fs.createReadStream(filePath);
+        callback({
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'video/mp4',
+            'Content-Length': String(fileSize),
+            'Accept-Ranges': 'bytes',
+            'Cache-Control': 'no-store',
+          },
+          data: stream,
+        });
+      } catch (e) {
+        console.error('[vault://] error', e);
+        callback({
+          statusCode: 500,
+          headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' },
+          data: Buffer.from('Internal Server Error'),
+        });
+      }
+    });
+  });
+}

@@ -1,0 +1,36 @@
+{
+  "name": "build-and-test",
+  "description": "Scripts de build et test validés pour Yindo USB Video Vault",
+  "scripts": {
+    "build-safe": "npm run clean && npm run build:renderer && npm run build:main",
+    "test-repeat": "npm run build-safe && node scripts/test-repeat-modes.js",
+    "launch-dev": "npm run build-safe && npx electron dist/main/index.js --enable-logging",
+    "validate-architecture": "node scripts/validate-ipc-architecture.js"
+  },
+  "buildCommands": {
+    "full": "npm run build",
+    "renderer": "npm run build:renderer", 
+    "main": "npm run build:main",
+    "clean": "npm run clean"
+  },
+  "testCommands": {
+    "launch": "npx electron dist/main/index.js --enable-logging",
+    "launchSilent": "npx electron dist/main/index.js",
+    "killElectron": "taskkill /F /IM electron.exe 2>$null"
+  },
+  "validation": {
+    "repeatModes": ["none", "one", "all"],
+    "criticalFiles": [
+      "src/main/preload.cjs",
+      "src/main/ipcQueue.ts", 
+      "src/main/index.ts",
+      "src/renderer/modules/ControlWindowClean.tsx",
+      "src/renderer/modules/DisplayApp.tsx"
+    ],
+    "logPatterns": {
+      "setRepeat": "[QUEUE] setRepeat appelé:",
+      "repeatLogic": "[QUEUE] player:event ended reçu",
+      "preloadExposed": "[preload.cjs] window.electron exposé"
+    }
+  }
+}

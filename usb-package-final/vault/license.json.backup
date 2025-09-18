@@ -1,0 +1,16 @@
+{
+  "id": "TEST-001",
+  "version": "1.0",
+  "createdAt": "2025-09-17T14:38:00Z",
+  "expires": "2025-12-31T23:59:59Z",
+  "features": ["playback", "watermark", "stats"],
+  "deviceBinding": {
+    "required": false
+  },
+  "signature": "test-signature",
+  "publicKey": "test-public-key",
+  "metadata": {
+    "issuer": "USB Video Vault Test",
+    "purpose": "Test de validation"
+  }
+}

@@ -1,0 +1,47 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "rebuild-vault",
+			"type": "shell",
+			"command": "rebuild-vault.cmd",
+			"group": "build"
+		},
+		{
+			"label": "rebuild-vault-2",
+			"type": "shell",
+			"command": ".\\rebuild-vault.cmd",
+			"group": "build"
+		},
+		{
+			"label": "add-demo",
+			"type": "shell",
+			"command": "node tools/packager/pack.js add-media --vault usb-package/vault --file src/assets/demo.mp4",
+			"group": "build"
+		},
+		{
+			"label": "add-demo-full",
+			"type": "shell",
+			"command": "node tools/packager/pack.js add-media --vault usb-package/vault --file src/assets/demo.mp4 --title \"Demo Video\" --artist \"Test\"",
+			"group": "build"
+		},
+		{
+			"label": "clean-media",
+			"type": "shell",
+			"command": "del /Q usb-package\\vault\\media\\*.enc",
+			"group": "build"
+		},
+		{
+			"label": "clean-media-ps",
+			"type": "shell",
+			"command": "Remove-Item usb-package\\vault\\media\\*.enc",
+			"group": "build"
+		},
+		{
+			"label": "fix-quick",
+			"type": "shell",
+			"command": ".\\fix-quick.cmd",
+			"group": "build"
+		}
+	]
+}

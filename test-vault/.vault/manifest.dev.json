@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "media": [
+    {
+      "id": "3476911b-e20d-4e0e-955a-71b9d2edb66a",
+      "title": "Demo Video",
+      "artist": "Test",
+      "sha256Enc": "c14a7634ac4f2582afb1d8a3d5f55c826f95070b542e48e7ad4daa2bd6ebd630"
+    },
+    {
+      "id": "cdf09021-0f2a-4aee-8c0f-2c3c3898e8bb",
+      "title": "Demo Video",
+      "artist": "Test",
+      "sha256Enc": "0e25981d66e46452f30e3482d820cecb43c3f225f8f9ea90ccb90e18d3e563a3"
+    },
+    {
+      "id": "41de357f-17e1-4c48-9487-04589e7469b6",
+      "title": "Démo Video",
+      "artist": "Test",
+      "sha256Enc": "17511618a9348bfd0245d2356a1c75cf48ba60f8cdd106db9581e4fa571bc416"
+    },
+    {
+      "id": "6bc430cd-7efe-418b-a996-79c6fbd60ed3",
+      "title": "Odogwu",
+      "artist": "Artiste B",
+      "sha256Enc": "a46001ba81e8ed22effdc252d182ee9085707097d78b78995fe52ec236b923a8"
+    },
+    {
+      "id": "26ab8580-83d9-4733-ad33-5124bef09328",
+      "title": "Odogwu",
+      "artist": "Artiste B",
+      "sha256Enc": "bf1da3447a5a15a83a7522f7dca21cc5656326a1bb6664669e8d5ca0823e2925"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+﻿# scripts/smoke.ps1
+# Smoke test USB Video Vault : lance l'app, attend, lit les logs, ferme proprement.
+
+param(
+  [int]$WaitSeconds = 6,
+  [string]$VaultPath = $env:VAULT_PATH
+)
+
+$ErrorActionPreference = 'Stop'
+
+# Chemins logs
+$out = Join-Path $PSScriptRoot 'smoke.out.txt'
+$err = Join-Path $PSScriptRoot 'smoke.err.txt'
+Remove-Item $out,$err -ErrorAction SilentlyContinue
+
+Write-Host " USB Video Vault - Smoke Test" -ForegroundColor Cyan
+if ($VaultPath) {
+  $resolved = Resolve-Path $VaultPath -ErrorAction SilentlyContinue
+  if ($resolved) {
+    $env:VAULT_PATH = $resolved.Path
+    Write-Host "VAULT_PATH: $env:VAULT_PATH"
+  } else {
+    Write-Host "  VAULT_PATH introuvable: $VaultPath"
+  }
+}
+
+function Resolve-Exe {
+  $distMaybe = Join-Path $PSScriptRoot '..\dist'
+  $dist = Resolve-Path $distMaybe -ErrorAction SilentlyContinue
+  if ($dist) {
+    $exe = Get-ChildItem -Path $dist.Path -Filter 'USB-Video-Vault-*.exe' -File |
+           Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    if ($exe) { return $exe.FullName }
+  }
+  return $null
+}
+
+$exePath = Resolve-Exe
+if ($exePath) {
+  Write-Host " Lance l'exécutable : $exePath" -ForegroundColor Yellow
+  $proc = Start-Process -FilePath $exePath `
+    -RedirectStandardOutput $out -RedirectStandardError $err `
+    -PassThru -NoNewWindow
+} else {
+  Write-Host " Exécutable non trouvé, fallback dev: npx electron . --no-sandbox" -ForegroundColor Yellow
+  $proc = Start-Process -FilePath 'npx' `
+    -ArgumentList @('electron','.', '--no-sandbox') `
+    -RedirectStandardOutput $out -RedirectStandardError $err `
+    -PassThru -NoNewWindow
+}
+
+Start-Sleep -Seconds $WaitSeconds
+
+Write-Host " Logs (extraits) :" -ForegroundColor Cyan
+if ((Test-Path $out) -or (Test-Path $err)) {
+  Get-Content $out,$err -ErrorAction SilentlyContinue |
+    Select-String -Pattern 'LICENSE|vault|GCM|watermark' |
+    ForEach-Object { $_.Line } |
+    Select-Object -First 50
+} else {
+  Write-Host "(Aucun log capturé)"
+}
+
+# Fermer proprement
+if ($proc -and -not $proc.HasExited) {
+  try { $null = $proc.CloseMainWindow() } catch { }
+  Start-Sleep -Milliseconds 500
+  if (-not $proc.HasExited) {
+    Stop-Process -Id $proc.Id -Force
+  }
+}
+
+Write-Host " Smoke test terminé." -ForegroundColor Green
+exit 0

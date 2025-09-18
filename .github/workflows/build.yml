@@ -1,0 +1,293 @@
+name: 🚀 Build & Security Validation
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+jobs:
+  # ================================
+  # 🔍 Security & Code Quality
+  # ================================
+  security-audit:
+    name: 🔐 Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: npm ci
+      
+    - name: 🔍 Security Audit
+      run: npm audit --audit-level moderate
+      
+    - name: 🔐 Security Gates (Crypto APIs)
+      run: |
+        echo "🔍 Checking for deprecated crypto APIs..."
+        ! grep -r "crypto\.createCipher\|crypto\.createDecipher\|md5\|sha1" src/ || exit 1
+        echo "✅ No deprecated crypto APIs found"
+        
+    - name: 🚫 Clear Text Detection
+      run: |
+        echo "🔍 Checking for clear MP4 writes..."
+        ! grep -r "\.mp4.*write\|write.*\.mp4" src/ || exit 1
+        echo "✅ No clear MP4 writes detected"
+
+  # ================================
+  # 🧪 TypeScript & Tests
+  # ================================
+  typescript-validation:
+    name: 📝 TypeScript Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: npm ci
+      
+    - name: 🔧 TypeScript Check
+      run: npm run typecheck
+      
+    - name: 🧪 Unit Tests
+      run: npm test
+      
+    - name: 🎯 Test Coverage
+      run: npm run test:coverage
+      
+    - name: 📊 Upload Coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage/lcov.info
+
+  # ================================
+  # 🏗️ Build Windows
+  # ================================
+  build-windows:
+    name: 🪟 Build Windows
+    runs-on: windows-latest
+    needs: [security-audit, typescript-validation]
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: npm ci
+      
+    - name: 🔧 Build Renderer
+      run: npm run build:renderer
+      
+    - name: 🔧 Build Main
+      run: npm run build:main
+      
+    - name: 📦 Package Electron (Portable)
+      run: npm run build:portable
+      
+    - name: 🔐 Generate SHA256
+      run: |
+        $hash = (Get-FileHash dist\*.exe -Algorithm SHA256).Hash
+        echo "SHA256: $hash" | Tee-Object -FilePath dist\SHA256SUMS
+        
+    - name: 🧪 Red Team Tests
+      run: node test-red-team-complete.mjs
+      
+    - name: ✅ Go/No-Go Checklist
+      run: node checklist-go-nogo.mjs
+      
+    - name: 📤 Upload Windows Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: usb-video-vault-windows
+        path: |
+          dist/*.exe
+          dist/SHA256SUMS
+          usb-package-final/
+        retention-days: 30
+
+  # ================================
+  # 🐧 Build Linux
+  # ================================
+  build-linux:
+    name: 🐧 Build Linux
+    runs-on: ubuntu-latest
+    needs: [security-audit, typescript-validation]
+    
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: npm ci
+      
+    - name: 🔧 Build Renderer
+      run: npm run build:renderer
+      
+    - name: 🔧 Build Main
+      run: npm run build:main
+      
+    - name: 📦 Package Electron (AppImage)
+      run: npm run build:linux
+      
+    - name: 🔐 Generate SHA256
+      run: |
+        sha256sum dist/*.AppImage > dist/SHA256SUMS
+        
+    - name: 🧪 Red Team Tests
+      run: node test-red-team-complete.mjs
+      
+    - name: ✅ Go/No-Go Checklist
+      run: node checklist-go-nogo.mjs
+      
+    - name: 📤 Upload Linux Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: usb-video-vault-linux
+        path: |
+          dist/*.AppImage
+          dist/SHA256SUMS
+        retention-days: 30
+
+  # ================================
+  # 🎭 E2E Tests (Playwright)
+  # ================================
+  e2e-tests:
+    name: 🎭 E2E Tests
+    runs-on: ${{ matrix.os }}
+    needs: [build-windows, build-linux]
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        
+    steps:
+    - name: 📥 Checkout
+      uses: actions/checkout@v4
+      
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        
+    - name: 📦 Install Dependencies
+      run: npm ci
+      
+    - name: 🎭 Install Playwright
+      run: npx playwright install
+      
+    - name: 📥 Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: usb-video-vault-${{ matrix.os == 'windows-latest' && 'windows' || 'linux' }}
+        path: ./dist
+        
+    - name: 🧪 E2E Tests
+      run: npm run test:e2e
+      
+    - name: 📤 Upload E2E Results
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: playwright-report-${{ matrix.os }}
+        path: playwright-report/
+        retention-days: 7
+
+  # ================================
+  # 🚀 Release Deployment
+  # ================================
+  deploy-release:
+    name: 🚀 Deploy Release
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux, e2e-tests]
+    if: github.event_name == 'release'
+    
+    steps:
+    - name: 📥 Download All Artifacts
+      uses: actions/download-artifact@v4
+      
+    - name: 🔐 Verify SHA256
+      run: |
+        cd usb-video-vault-windows
+        sha256sum -c SHA256SUMS
+        cd ../usb-video-vault-linux
+        sha256sum -c SHA256SUMS
+        
+    - name: 📤 Upload to Release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          usb-video-vault-windows/*.exe
+          usb-video-vault-windows/SHA256SUMS
+          usb-video-vault-linux/*.AppImage
+          usb-video-vault-linux/SHA256SUMS
+        body: |
+          ## 🔐 USB Video Vault Release
+          
+          **Security Features:**
+          - ✅ AES-256-GCM encryption
+          - ✅ Ed25519 digital signatures
+          - ✅ Device binding
+          - ✅ Anti-tamper protection
+          
+          **Validation:**
+          - ✅ Security audit passed
+          - ✅ Red team tests passed
+          - ✅ E2E tests passed
+          - ✅ Go/No-Go checklist: 100%
+          
+          **SHA256 Checksums:**
+          ```
+          Windows: See SHA256SUMS
+          Linux: See SHA256SUMS
+          ```
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ================================
+  # 📊 Notification
+  # ================================
+  notify-completion:
+    name: 📢 Notify Completion
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-linux, e2e-tests]
+    if: always()
+    
+    steps:
+    - name: 📢 Build Status
+      run: |
+        if [ "${{ needs.build-windows.result }}" == "success" ] && [ "${{ needs.build-linux.result }}" == "success" ] && [ "${{ needs.e2e-tests.result }}" == "success" ]; then
+          echo "🎉 BUILD SUCCESS: All platforms validated"
+        else
+          echo "❌ BUILD FAILED: Check logs"
+          exit 1
+        fi

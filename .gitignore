@@ -1,0 +1,124 @@
+# 🔒 USB Video Vault - .gitignore
+# Fichiers et dossiers à exclure de la sauvegarde Git
+
+# === SÉCURITÉ ET DONNÉES SENSIBLES ===
+# Clés de chiffrement et licences
+*.key
+*.pem
+*.p12
+*.pfx
+scripts/keys/
+scripts/lic/
+backups/issued-*.json
+tools/license-management/issued-*.json
+
+# Licences de test
+**/license.json
+**/license-*.json
+vault*/license*.json
+
+# === BUILD ET DISTRIBUTION ===
+# Artifacts de build
+dist/
+build/
+out/
+*.exe
+*.dmg
+*.deb
+*.rpm
+*.zip
+*.tar.gz
+
+# Packages USB
+usb-package/
+usb-package-new/
+test-usb/
+
+# === DÉVELOPPEMENT ===
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Logs
+logs/
+*.log
+*.out.txt
+*.err.txt
+smoke.out.txt
+smoke.err.txt
+
+# Cache
+.cache/
+.tmp/
+.temp/
+temp/
+
+# === ÉDITEURS ET IDE ===
+# VS Code
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+
+# JetBrains
+.idea/
+*.iml
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# === SYSTÈME ===
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+
+# === VAULT ET MÉDIAS ===
+# Contenus des vaults (sauf structure)
+vault*/media/
+vault*/.vault/
+**/media/*.enc
+**/media/*.mp4
+**/media/*.avi
+**/media/*.mkv
+
+# Vaults de test
+vault-test/
+vault-test2/
+vault-clean/
+vault-real/
+vault-quotas-test/
+
+# === RAPPORTS ET TEMPORAIRE ===
+# Rapports générés
+reports/
+*.report
+*.txt
+temp-*
+
+# Tests
+coverage/
+.nyc_output/
+
+# === CONFIGURATION LOCALE ===
+# Variables d'environnement locales
+.env
+.env.local
+.env.*.local
+
+# Configuration utilisateur
+config.local.json
+settings.local.json

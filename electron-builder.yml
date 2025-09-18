@@ -1,0 +1,27 @@
+appId: com.yindo.usbvideovault
+productName: Yindo USB Video Vault
+files:
+  - "dist/**/*"
+  - "dist-electron/**/*"
+  - "!**/*.map"
+asar: true
+asarUnpack:
+  - "**/*.node"
+extraResources:
+  - from: usb-package
+    to: usb-package
+win:
+  target:
+    - target: portable
+      arch:
+        - x64
+  artifactName: "Yindo-USB-Video-Vault-${version}-portable.exe"
+mac:
+  target:
+    - dmg
+linux:
+  target:
+    - AppImage
+directories:
+  output: "release"
+  buildResources: "build"

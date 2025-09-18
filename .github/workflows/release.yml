@@ -1,0 +1,314 @@
+# 🤖 GitHub Actions Workflow - USB Video Vault
+
+name: '🚀 Release Pipeline'
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., v1.0.0)'
+        required: true
+        default: 'v1.0.0-rc.1'
+
+env:
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.10'
+
+jobs:
+  # ===== VALIDATION PHASE =====
+  validate:
+    name: '🔍 Validation & Security'
+    runs-on: ubuntu-latest
+    steps:
+      - name: '📥 Checkout Code'
+        uses: actions/checkout@v4
+        
+      - name: '⚙️ Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: '📦 Install Dependencies'
+        run: npm ci
+        
+      - name: '🔍 TypeScript Check'
+        run: npm run test:typecheck
+        
+      - name: '🛡️ Security Audit'
+        run: npm audit --audit-level=high
+        
+      - name: '🔴 Red Team Tests'
+        run: |
+          node test-red-scenarios.mjs
+          echo "Red team scenarios passed ✅"
+          
+      - name: '📋 Go/No-Go Checklist'
+        run: |
+          node checklist-go-nogo.mjs
+          echo "Go/No-Go validation passed ✅"
+
+  # ===== BUILD PHASE =====
+  build-windows:
+    name: '🪟 Build Windows'
+    runs-on: windows-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          
+      - name: '📦 Install & Build'
+        run: |
+          npm ci
+          npm run build
+          npm run build:main
+          npm run electron:build
+          
+      - name: '🖊️ Code Signing (Windows)'
+        if: github.event_name == 'push'
+        run: |
+          # Import certificate from secrets
+          echo "${{ secrets.WINDOWS_CERT_BASE64 }}" | base64 -d > cert.pfx
+          
+          # Sign executable
+          & "$env:ProgramFiles (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64\\signtool.exe" sign `
+            /fd SHA256 /f cert.pfx /p "${{ secrets.WINDOWS_CERT_PASSWORD }}" `
+            /tr http://timestamp.sectigo.com /td SHA256 `
+            /d "USB Video Vault" `
+            "dist\\USB-Video-Vault-*.exe"
+            
+          # Verify signature
+          & "$env:ProgramFiles (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64\\signtool.exe" verify /pa /v "dist\\USB-Video-Vault-*.exe"
+          
+          # Generate hash
+          certutil -hashfile "dist\\USB-Video-Vault-*.exe" SHA256 > windows-sha256.txt
+          
+      - name: '📤 Upload Windows Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-portable
+          path: |
+            dist/*.exe
+            windows-sha256.txt
+
+  build-macos:
+    name: '🍎 Build macOS'
+    runs-on: macos-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Install & Build'
+        run: |
+          npm ci
+          npm run build
+          npm run build:main
+          npm run electron:build
+          
+      - name: '🖊️ Code Signing (macOS)'
+        if: github.event_name == 'push'
+        run: |
+          # Import certificates
+          echo "${{ secrets.MACOS_CERT_BASE64 }}" | base64 -d > cert.p12
+          security create-keychain -p "temp" temp.keychain
+          security import cert.p12 -k temp.keychain -P "${{ secrets.MACOS_CERT_PASSWORD }}" -T /usr/bin/codesign
+          security list-keychains -s temp.keychain
+          security unlock-keychain -p "temp" temp.keychain
+          
+          # Sign application
+          codesign --deep --force --options runtime --timestamp \\
+            --sign "${{ secrets.MACOS_DEVELOPER_ID }}" \\
+            "dist/mac/USB-Video-Vault.app"
+            
+          # Create DMG
+          hdiutil create -volname "USB Video Vault" -srcfolder "dist/mac/USB-Video-Vault.app" -ov -format UDZO "dist/USB-Video-Vault.dmg"
+          
+          # Notarization
+          xcrun notarytool submit "dist/USB-Video-Vault.dmg" \\
+            --apple-id "${{ secrets.APPLE_ID }}" \\
+            --team-id "${{ secrets.APPLE_TEAM_ID }}" \\
+            --password "${{ secrets.APPLE_APP_PASSWORD }}" \\
+            --wait
+            
+          # Staple
+          xcrun stapler staple "dist/USB-Video-Vault.dmg"
+          
+          # Generate hash
+          shasum -a 256 "dist/USB-Video-Vault.dmg" > macos-sha256.txt
+          
+      - name: '📤 Upload macOS Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: |
+            dist/*.dmg
+            macos-sha256.txt
+
+  build-linux:
+    name: '🐧 Build Linux'
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📦 Install & Build'
+        run: |
+          npm ci
+          npm run build
+          npm run build:main
+          npm run electron:build
+          
+      - name: '🖊️ GPG Signing (Linux)'
+        if: github.event_name == 'push'
+        run: |
+          # Import GPG key
+          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import
+          
+          # Sign AppImage
+          for appimage in dist/*.AppImage; do
+            gpg --detach-sign --armor --default-key "${{ secrets.GPG_KEY_ID }}" "$appimage"
+            gpg --verify "${appimage}.asc" "$appimage"
+          done
+          
+          # Generate hash
+          shasum -a 256 dist/*.AppImage > linux-sha256.txt
+          
+      - name: '📤 Upload Linux Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-appimage
+          path: |
+            dist/*.AppImage
+            dist/*.AppImage.asc
+            linux-sha256.txt
+
+  # ===== PACKAGE PHASE =====
+  create-usb-packages:
+    name: '💿 Create USB Packages'
+    runs-on: ubuntu-latest
+    needs: [build-windows, build-macos, build-linux]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          
+      - name: '📥 Download All Artifacts'
+        uses: actions/download-artifact@v4
+        
+      - name: '📦 Create Demo USB Package'
+        run: |
+          # Create demo package with sample media
+          node tools/create-client-usb.mjs \\
+            --client "DEMO-PACKAGE" \\
+            --media "./src/assets" \\
+            --output "./usb-demo" \\
+            --password "${{ secrets.DEMO_PASSWORD }}" \\
+            --license-id "DEMO-2025-0001" \\
+            --expires "2026-12-31T23:59:59Z" \\
+            --features "playbook,demo"
+            
+          # Copy signed executables
+          cp windows-portable/*.exe usb-demo/
+          
+          # Create final ZIP
+          zip -r USB-Video-Vault-Demo-Package.zip usb-demo/
+          
+      - name: '📤 Upload USB Package'
+        uses: actions/upload-artifact@v4
+        with:
+          name: usb-demo-package
+          path: USB-Video-Vault-Demo-Package.zip
+
+  # ===== RELEASE PHASE =====
+  create-release:
+    name: '🎉 Create GitHub Release'
+    runs-on: ubuntu-latest
+    needs: [create-usb-packages]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: '📥 Download All Artifacts'
+        uses: actions/download-artifact@v4
+        
+      - name: '📋 Prepare Release Assets'
+        run: |
+          mkdir -p release-assets
+          
+          # Copy signed binaries
+          cp windows-portable/*.exe release-assets/
+          cp macos-dmg/*.dmg release-assets/
+          cp linux-appimage/*.AppImage release-assets/
+          cp linux-appimage/*.AppImage.asc release-assets/
+          
+          # Copy USB demo package
+          cp usb-demo-package/*.zip release-assets/
+          
+          # Combine SHA256 files
+          cat windows-portable/windows-sha256.txt > release-assets/SHA256SUMS
+          cat macos-dmg/macos-sha256.txt >> release-assets/SHA256SUMS
+          cat linux-appimage/linux-sha256.txt >> release-assets/SHA256SUMS
+          
+          # Copy documentation
+          cp templates/RELEASE_NOTES_v1.0.0.md release-assets/RELEASE_NOTES.md
+          cp templates/GUIDE_UTILISATEUR_FINAL.md release-assets/USER_GUIDE.md
+          
+      - name: '🏷️ Extract Version'
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        
+      - name: '🚀 Create Release'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: 'USB Video Vault ${{ steps.version.outputs.VERSION }}'
+          body_path: release-assets/RELEASE_NOTES.md
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.VERSION, 'rc') || contains(steps.version.outputs.VERSION, 'beta') }}
+          files: |
+            release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ===== NOTIFICATION PHASE =====
+  notify-success:
+    name: '📢 Notify Success'
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: success()
+    steps:
+      - name: '📧 Send Success Notification'
+        run: |
+          echo "🎉 Release ${{ github.ref_name }} created successfully!"
+          echo "📁 Assets: Windows .exe, macOS .dmg, Linux .AppImage"
+          echo "💿 Demo USB package included"
+          echo "🔐 All binaries signed and verified"
+          
+          # Here you could add Slack/Discord/Email notifications
+          
+  notify-failure:
+    name: '⚠️ Notify Failure'
+    runs-on: ubuntu-latest
+    needs: [validate, build-windows, build-macos, build-linux, create-usb-packages]
+    if: failure()
+    steps:
+      - name: '📧 Send Failure Notification'
+        run: |
+          echo "❌ Release pipeline failed for ${{ github.ref_name }}"
+          echo "🔍 Check the logs for details"
+          echo "🛠️ Manual intervention may be required"
+          
+          # Here you could add Slack/Discord/Email notifications

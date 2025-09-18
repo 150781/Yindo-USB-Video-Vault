@@ -1,0 +1,105 @@
+{
+  "name": "usb-video-vault",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main/index.js",
+  "type": "module",
+  "scripts": {
+    "dev:renderer": "vite --config vite.renderer.config.ts",
+    "dev:main": "tsc -w -p tsconfig.main.json",
+    "dev:electron": "cross-env NODE_ENV=development VITE_DEV_SERVER_URL=http://localhost:5176 electron dist/main/index.js --remote-debugging-port=0 --no-sandbox --disable-gpu-sandbox --disable-dev-shm-usage --vite-port=5176",
+    "dev": "concurrently -k \"npm:dev:*\"",
+    "clean": "rimraf dist",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "build:main": "tsc -p tsconfig.main.json",
+    "postbuild:main": "node scripts/copy-preload.cjs",
+    "build": "npm run clean && npm run build:renderer && npm run build:main",
+    "dist:win": "npm run build && electron-builder --win portable",
+    "dist:mac": "npm run build && electron-builder --mac zip",
+    "package:usb": "node scripts/build-usb.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "cd e2e && npm run test:e2e",
+    "test:e2e:install": "cd e2e && npm install",
+    "packager": "node tools/packager/pack.js",
+    "packager:init": "tsx tools/packager/cli.ts init --vault ./usb-package/vault",
+    "packager:import": "tsx tools/packager/cli.ts import --vault ./usb-package/vault --src \"src/assets/**/*.{mp4,webm,ogg,mp3,m4a}\" --pass \"motdepasse\"",
+    "packager:seal": "tsx tools/packager/cli.ts seal --vault ./usb-package/vault --pass \"motdepasse\"",
+    "packager:list": "tsx tools/packager/cli.ts list --vault ./usb-package/vault --pass \"motdepasse\"",
+    "pack:win": "electron-builder -w portable",
+    "pack:mac": "electron-builder -m",
+    "pack:linux": "electron-builder -l AppImage",
+    "test:typecheck": "tsc --noEmit",
+    "test:security": "tsx test/test-security-complete.test.ts",
+    "test:hardening": "tsx test/test-security-hardening.test.ts",
+    "test:direct": "npm run test:typecheck && npm run test:security && npm run test:hardening"
+  },
+  "build": {
+    "appId": "com.yindo.usbvideovault",
+    "productName": "USB Video Vault",
+    "asar": true,
+    "files": [
+      "dist/**",
+      "src/**",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "artifactName": "USB-Video-Vault-${version}-portable.exe"
+    },
+    "mac": {
+      "category": "public.app-category.video",
+      "target": [
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "artifactName": "USB-Video-Vault-${version}-mac-${arch}.zip"
+    }
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "mime-types": "^3.0.1",
+    "node-machine-id": "^1.1.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tweetnacl": "^1.0.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^22.18.1",
+    "@types/react": "^18.3.5",
+    "@types/react-dom": "^18.3.0",
+    "@types/yargs": "^17.0.33",
+    "@types/yargs-parser": "^21.0.3",
+    "@vitejs/plugin-react": "^4.3.1",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.0.1",
+    "copyfiles": "^2.4.1",
+    "cross-env": "^7.0.3",
+    "electron": "^31.7.7",
+    "electron-builder": "^26.0.12",
+    "fast-glob": "^3.3.3",
+    "ffprobe-static": "^3.1.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "fs-extra": "^11.3.1",
+    "postcss": "^8.4.47",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^3.4.13",
+    "tsx": "^4.20.5",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.3",
+    "wait-on": "^7.2.0",
+    "yargs": "^18.0.0"
+  }
+}
