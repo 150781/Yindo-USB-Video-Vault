@@ -1,0 +1,17 @@
+﻿# USB Video Vault v1.0.0 - Hashes d'intégrité
+# Générés le: 2025-09-18 18:20:58
+
+## Exécutable Principal
+Fichier: USB-Video-Vault-0.1.0-portable.exe
+Chemin: C:\Users\patok\Documents\Yindo-USB-Video-Vault\dist\USB-Video-Vault-0.1.0-portable.exe
+Taille: 533.42 MB
+Date: 2025-09-18 18:18:58
+SHA256: 3B5AFA7C26FC98668338417EF6D4846B4F80BAE128DB617C58AEA83DE95A016E
+
+## Vérification
+Pour vérifier l'intégrité:
+```
+certutil -hashfile "USB-Video-Vault-0.1.0-portable.exe" SHA256
+```
+
+Le hash affiché doit correspondre exactement à: 3B5AFA7C26FC98668338417EF6D4846B4F80BAE128DB617C58AEA83DE95A016E
