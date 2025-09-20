@@ -1,4 +1,6 @@
 
+import './safe-console';
+
 import { app, BrowserWindow, nativeTheme, protocol, session, powerMonitor, ipcMain } from 'electron';
 import path from 'path';
 import fs from 'fs';

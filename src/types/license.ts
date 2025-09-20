@@ -12,6 +12,7 @@ export interface LicenseData {
   issuer: string;                   // Émetteur de la licence
   issuedAt: string;                 // Date d'émission ISO 8601
   version: number;                  // Version du format de licence
+  kid?: string;                     // Key ID pour rotation des clés (optionnel)
 }
 
 export interface LicenseFile {

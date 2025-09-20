@@ -406,6 +406,17 @@ async function main() {
     }
   }
   
+  // Normaliser les clés (license-id -> licenseId)
+  if (options['license-id']) {
+    options.licenseId = options['license-id'];
+  }
+  if (options['bind-usb']) {
+    options.bindUsb = options['bind-usb'];
+  }
+  if (options['bind-machine']) {
+    options.bindMachine = options['bind-machine'];
+  }
+  
   try {
     const packager = new ClientUSBPackager(options);
     const result = await packager.createClientUSB();
@@ -461,6 +472,10 @@ Exemple:
   process.exit(0);
 }
 
-if (require.main === module) {
-  main();
+// ESM version check
+if (import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`) {
+  main().catch(error => {
+    console.error('❌ Erreur:', error.message);
+    process.exit(1);
+  });
 }

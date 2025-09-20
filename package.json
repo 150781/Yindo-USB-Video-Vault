@@ -1,6 +1,6 @@
 {
   "name": "usb-video-vault",
-  "version": "0.1.0",
+  "version": "1.0.3",
   "private": true,
   "main": "dist/main/index.js",
   "type": "module",
@@ -36,38 +36,49 @@
   "build": {
     "appId": "com.yindo.usbvideovault",
     "productName": "USB Video Vault",
-    "asar": true,
-    "files": [
-      "dist/**",
-      "src/**",
-      "package.json"
-    ],
     "directories": {
-      "buildResources": "build",
       "output": "dist"
     },
+    "files": [
+      "dist/**",
+      "assets/**",
+      "package.json"
+    ],
     "win": {
       "target": [
-        "portable"
-      ],
-      "artifactName": "USB-Video-Vault-${version}-portable.exe"
-    },
-    "mac": {
-      "category": "public.app-category.video",
-      "target": [
         {
-          "target": "zip",
+          "target": "portable",
           "arch": [
-            "x64",
-            "arm64"
+            "x64"
+          ]
+        },
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
           ]
         }
       ],
-      "artifactName": "USB-Video-Vault-${version}-mac-${arch}.zip"
+      "legalTrademarks": "USB Video Vault"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "USB-Video-Vault-${version}-Setup.exe",
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "USB Video Vault",
+      "uninstallDisplayName": "USB Video Vault",
+      "runAfterFinish": true,
+      "license": "EULA_FR_light.md",
+      "include": "build/installer.nsh"
     }
   },
   "dependencies": {
     "commander": "^12.1.0",
+    "electron-log": "^5.4.3",
     "mime-types": "^3.0.1",
     "node-machine-id": "^1.1.12",
     "react": "^18.3.1",

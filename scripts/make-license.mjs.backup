@@ -1,0 +1,269 @@
+#!/usr/bin/env node
+// scripts/make-license.mjs
+// Crée     // 1. Données de license
+    const licenseData = {
+      version: '1.0',
+      kid: 'prod-v1', // Identifiant clé pour rotation
+      machineFingerprint: machineFingerprint,
+      usbSerial: usbSerial || '',
+      issuedAt: new Date().toISOString(),
+      expiresAt: null, // License permanente
+      features: ['video-playback', 'playlist-management', 'vault-access'],
+      issuer: 'USB-Video-Vault-Packager'
+    };e signée pour une machine/USB donnée
+
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
+import zlib from 'zlib';
+import { promisify } from 'util';
+
+const gzip = promisify(zlib.gzip);
+const gunzip = promisify(zlib.gunzip);
+
+/**
+ * Charge la clé privée depuis l'environnement
+ */
+function getPrivateKey() {
+  const privateHex = process.env.PACKAGER_PRIVATE_HEX;
+  if (!privateHex) {
+    throw new Error('PACKAGER_PRIVATE_HEX non défini dans l\'environnement');
+  }
+  
+  if (privateHex.length !== 128) { // 64 bytes * 2 chars hex
+    throw new Error(`PACKAGER_PRIVATE_HEX invalide: ${privateHex.length} chars (attendu: 128)`);
+  }
+  
+  return Buffer.from(privateHex, 'hex');
+}
+
+/**
+ * Signe les données de license avec tweetnacl
+ */
+async function signLicense(licenseData, privateKey) {
+  try {
+    // Import dynamique de tweetnacl
+    const nacl = await import('tweetnacl');
+    
+    // Convertir les données en buffer
+    const dataBuffer = Buffer.from(JSON.stringify(licenseData), 'utf8');
+    
+    // Signer avec tweetnacl
+    const signature = nacl.default.sign.detached(dataBuffer, privateKey);
+    
+    return Buffer.from(signature);
+  } catch (error) {
+    throw new Error(`Erreur signature: ${error.message}`);
+  }
+}
+
+/**
+ * Crée le fichier license.bin
+ */
+async function createLicense(machineFingerprint, usbSerial = '') {
+  try {
+    console.log('🔐 CRÉATION LICENSE...');
+    console.log('======================');
+    console.log('');
+    
+    // 1. Données de license
+    const licenseData = {
+      version: '1.0',
+      machineFingerprint: machineFingerprint,
+      usbSerial: usbSerial || '',
+      issuedAt: new Date().toISOString(),
+      expiresAt: null, // License permanente
+      features: ['video-playback', 'playlist-management', 'vault-access'],
+      issuer: 'USB-Video-Vault-Packager'
+    };
+    
+    console.log('📋 Données license:');
+    console.log(`    Machine: ${licenseData.machineFingerprint}`);
+    console.log(`    USB: ${licenseData.usbSerial || '(aucun)'}`);
+    console.log(`    Émission: ${licenseData.issuedAt}`);
+    console.log('');
+    
+    // 2. Signature
+    console.log('✍️  Signature...');
+    const privateKey = getPrivateKey();
+    const signature = await signLicense(licenseData, privateKey);
+    console.log(`    Signature: ${signature.length} bytes`);
+    console.log('');
+    
+    // 3. Format binaire final avec compression gzip+base64
+    const licenseStructure = {
+      data: licenseData,
+      signature: Buffer.from(signature).toString('base64')
+    };
+    
+    const licenseJson = JSON.stringify(licenseStructure, null, 2);
+    const licenseBuffer = Buffer.from(licenseJson, 'utf8');
+    
+    // Compression gzip puis encodage base64
+    const gzipBuffer = await gzip(licenseBuffer);
+    const finalBuffer = gzipBuffer.toString('base64');
+    
+    console.log(`📦 Compression: ${licenseBuffer.length} → ${gzipBuffer.length} bytes (${Math.round(gzipBuffer.length/licenseBuffer.length*100)}%)`);
+    console.log(`🔐 Encodage base64: ${finalBuffer.length} chars`);
+    console.log('');
+    
+    // 4. Sauvegarde license.bin (format gzip+base64)
+    const binOutputPath = path.join('vault-real', '.vault', 'license.bin');
+    
+    // Créer le dossier .vault si nécessaire
+    const vaultDir = path.dirname(binOutputPath);
+    if (!fs.existsSync(vaultDir)) {
+      fs.mkdirSync(vaultDir, { recursive: true });
+    }
+    
+    fs.writeFileSync(binOutputPath, finalBuffer, 'utf8');
+    
+    console.log('💾 Sauvegarde license.bin:');
+    console.log(`    Fichier: ${binOutputPath}`);
+    console.log(`    Taille: ${finalBuffer.length} chars (base64)`);
+    console.log(`    Format: gzip+base64`);
+    console.log('');
+    
+    // 5. Résumé
+    console.log('✅ LICENSE BINAIRE CRÉÉE AVEC SUCCÈS !');
+    console.log('');
+    console.log('📁 Pour l\'utiliser:');
+    console.log(`    1. Le fichier est déjà dans ${binOutputPath}`);
+    console.log(`    2. S'assurer que device.tag contient le bon fingerprint`);
+    console.log('');
+    
+    return binOutputPath;
+    
+  } catch (error) {
+    console.error('❌ Erreur création license:', error.message);
+    process.exit(1);
+  }
+}
+
+/**
+ * Crée aussi le JSON de fallback pour le vault
+ */
+async function createFallbackJSON(machineFingerprint, usbSerial = '') {
+  try {
+    console.log('📄 CRÉATION JSON FALLBACK...');
+    console.log('=============================');
+    console.log('');
+    
+    // 1. Structure JSON de fallback
+    const data = {
+      licenseId: "dev-local-001",
+      version: 1, // LICENSE_VERSION
+      kid: 'prod-v1', // Identifiant clé pour rotation
+      exp: "2099-12-31T23:59:59.000Z",
+      machineFingerprint: machineFingerprint,
+      features: ["playback", "secure-vault"]
+    };
+    
+    console.log('📋 Données JSON fallback:');
+    console.log(`    License ID: ${data.licenseId}`);
+    console.log(`    Version: ${data.version}`);
+    console.log(`    Expiration: ${data.exp}`);
+    console.log(`    Machine: ${data.machineFingerprint}`);
+    console.log(`    Features: ${data.features.join(', ')}`);
+    console.log('');
+    
+    // 2. Signature des données
+    console.log('✍️  Signature JSON...');
+    const privateKey = getPrivateKey();
+    
+    // Signer exactement comme attendu par l'app
+    const nacl = await import('tweetnacl');
+    const dataString = JSON.stringify(data, null, 2);
+    const dataBuffer = Buffer.from(dataString, 'utf8');
+    const signature = nacl.default.sign.detached(dataBuffer, privateKey);
+    const signatureBase64 = Buffer.from(signature).toString('base64');
+    
+    console.log(`    Signature: ${signatureBase64.substring(0, 20)}...`);
+    console.log('');
+    
+    // 3. JSON final
+    const licenseJSON = {
+      data: data,
+      signature: signatureBase64
+    };
+    
+    // 4. Sauvegarde dans vault-real/license.json
+    const jsonPath = path.join("vault-real", "license.json");
+    
+    // Créer le dossier vault-real si nécessaire
+    const vaultPath = path.dirname(jsonPath);
+    if (!fs.existsSync(vaultPath)) {
+      fs.mkdirSync(vaultPath, { recursive: true });
+    }
+    
+    const jsonContent = JSON.stringify(licenseJSON, null, 2);
+    fs.writeFileSync(jsonPath, jsonContent, 'utf8');
+    
+    console.log('💾 JSON fallback sauvegardé:');
+    console.log(`    Fichier: ${jsonPath}`);
+    console.log(`    Taille: ${jsonContent.length} chars`);
+    console.log('');
+    
+    console.log('✅ JSON FALLBACK CRÉÉ !');
+    console.log('');
+    
+    return jsonPath;
+    
+  } catch (error) {
+    console.error('❌ Erreur création JSON fallback:', error.message);
+    throw error;
+  }
+}
+
+// === MAIN ===
+const args = process.argv.slice(2);
+
+if (args.length < 1) {
+  console.error('❌ Usage: node scripts/make-license.mjs <machineFingerprint> [usbSerial]');
+  console.error('');
+  console.error('Exemples:');
+  console.error('   node scripts/make-license.mjs "abc123def456"');
+  console.error('   node scripts/make-license.mjs "abc123def456" "USB-SERIAL-789"');
+  console.error('');
+  console.error('💡 Pour obtenir le fingerprint:');
+  console.error('   node scripts/print-bindings.mjs');
+  process.exit(1);
+}
+
+const machineFingerprint = args[0];
+const usbSerial = args[1] || '';
+
+// Validation du fingerprint
+if (!machineFingerprint || machineFingerprint.length < 8) {
+  console.error('❌ Machine fingerprint invalide (min 8 chars)');
+  process.exit(1);
+}
+
+// Créer la license
+createLicense(machineFingerprint, usbSerial)
+  .then(binPath => {
+    console.log(`✅ License binaire: ${binPath}`);
+    // Créer aussi le JSON fallback
+    return createFallbackJSON(machineFingerprint, usbSerial);
+  })
+  .then(jsonPath => {
+    console.log(`✅ JSON fallback: ${jsonPath}`);
+    console.log('');
+    console.log('🎯 DUAL OUTPUT CRÉÉ !');
+    console.log('====================');
+    console.log('');
+    console.log('📁 Fichiers générés:');
+    console.log('   ✅ vault-real/.vault/license.bin (format prod)');
+    console.log('   ✅ vault-real/license.json (fallback prod)');
+    console.log('   ✅ vault-real/license-test-expired.json (legacy)');
+    console.log('');
+    console.log('📁 Pour tester:');
+    console.log('   $env:VAULT_PATH = "vault-real"');
+    console.log('   Remove-Item "vault-real\\.license_state.json" -ErrorAction SilentlyContinue');
+    console.log('   & "dist\\win-unpacked\\USB Video Vault.exe"');
+    console.log('');
+  })
+  .catch(error => {
+    console.error('❌ Erreur:', error.message);
+    process.exit(1);
+  });
