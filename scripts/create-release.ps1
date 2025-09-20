@@ -5,11 +5,11 @@
 param(
     [string]$Version = "1.0.3",
     [string]$CertPath = "",
-    [string]$CertPassword = "",
+    [SecureString]$CertPassword,
     [string]$TimestampUrl = "http://timestamp.digicert.com",
-    [switch]$SkipBuild = $false,
-    [switch]$SkipSigning = $false,
-    [switch]$TestMode = $true
+    [switch]$SkipBuild,
+    [switch]$SkipSigning,
+    [switch]$TestMode
 )
 
 $ErrorActionPreference = "Stop"
@@ -82,7 +82,7 @@ function Update-Version {
     }
 }
 
-function Build-Application {
+function Invoke-ApplicationBuild {
     if ($SkipBuild) {
         Write-Log "Construction ignorée (SkipBuild=true)" "WARN"
         return
@@ -118,7 +118,7 @@ function Build-Application {
     Write-Log "Construction terminée avec succès" "OK"
 }
 
-function Generate-SBOM {
+function New-SBOM {
     Write-Log "=== Génération du SBOM ===" "INFO"
     
     $sbomFile = "sbom-v$Version.json"
@@ -133,7 +133,7 @@ function Generate-SBOM {
     }
 }
 
-function Calculate-Hashes {
+function Get-FileHashes {
     Write-Log "=== Calcul des empreintes SHA256 ===" "INFO"
     
     $hashFile = "SHA256-HASHES-v$Version.txt"
@@ -172,7 +172,7 @@ function Calculate-Hashes {
     return $hashResults
 }
 
-function Sign-Executables {
+function Set-ExecutableSignatures {
     param([array]$Executables)
     
     if ($SkipSigning) {
@@ -216,7 +216,12 @@ function Sign-Executables {
             exit 1
         }
         
-        $cert = Get-PfxCertificate -FilePath $CertPath
+        if (-not [string]::IsNullOrEmpty($CertPath)) {
+            $cert = Get-PfxCertificate -FilePath $CertPath
+        } else {
+            Write-Log "Aucun certificat spécifié pour la production" "ERROR"
+            exit 1
+        }
         
         foreach ($exe in $Executables) {
             if (Test-Path $exe.File) {
@@ -233,7 +238,7 @@ function Sign-Executables {
     }
 }
 
-function Create-ReleasePackage {
+function New-ReleasePackage {
     param([array]$Executables)
     
     Write-Log "=== Création du package de release ===" "INFO"
@@ -293,7 +298,7 @@ function Create-ReleasePackage {
     return $archiveName
 }
 
-function Generate-ReleaseReport {
+function New-ReleaseReport {
     param([array]$Executables, [string]$Archive)
     
     Write-Log "=== Génération du rapport de release ===" "INFO"
@@ -386,12 +391,12 @@ try {
     
     Test-Prerequisites
     Update-Version
-    Build-Application
-    Generate-SBOM
-    $executables = Calculate-Hashes
-    Sign-Executables -Executables $executables
-    $archive = Create-ReleasePackage -Executables $executables
-    Generate-ReleaseReport -Executables $executables -Archive $archive
+    Invoke-ApplicationBuild
+    New-SBOM
+    $executables = Get-FileHashes
+    Set-ExecutableSignatures -Executables $executables
+    $archive = New-ReleasePackage -Executables $executables
+    New-ReleaseReport -Executables $executables -Archive $archive
     
     Write-Log "=== RELEASE v$Version TERMINÉE AVEC SUCCÈS ===" "OK"
     Write-Log "Archive de release: $archive" "INFO"

@@ -1,17 +1,12 @@
-#!/usr/bin/env pwsh
 # PSScriptAnalyzer Check - Build Scripts
+# Version améliorée avec support des bonnes pratiques
 
 param(
     [switch]$Fix,
-    [string[]]$Severity = @("Error", "Warning")
-)
-
-$scriptsPath = "scripts"
-$buildScripts = @(
-    "build-and-sign.ps1",
-    "quick-sign.ps1", 
-    "validate-certificates.ps1",
-    "create-test-certificate.ps1"
+    [string[]]$Severity = @("Error", "Warning"),
+    [string]$Path = "scripts",
+    [switch]$Detailed,
+    [string[]]$ExcludeRule = @()
 )
 
 Write-Host "VERIFICATION PSSCRIPTANALYZER" -ForegroundColor Cyan
@@ -20,11 +15,20 @@ Write-Host "================================================================" -F
 # Vérifier PSScriptAnalyzer disponible
 try {
     Import-Module PSScriptAnalyzer -ErrorAction Stop
+    Write-Host "✅ PSScriptAnalyzer disponible" -ForegroundColor Green
 } catch {
-    Write-Host "PSScriptAnalyzer non disponible" -ForegroundColor Red
+    Write-Host "❌ PSScriptAnalyzer non disponible" -ForegroundColor Red
     Write-Host "Installation: Install-Module -Name PSScriptAnalyzer -Force" -ForegroundColor Yellow
     exit 1
 }
+
+# Chercher tous les scripts PowerShell
+$scriptFiles = Get-ChildItem -Path $Path -Recurse -Filter "*.ps1" | Where-Object {
+    $_.FullName -notmatch "node_modules|\.git|bin|obj"
+}
+
+Write-Host "Scripts à analyser: $($scriptFiles.Count)" -ForegroundColor White
+Write-Host ""
 
 $totalIssues = 0
 $fixedIssues = 0
