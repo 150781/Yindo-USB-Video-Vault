@@ -10,12 +10,38 @@ asarUnpack:
 extraResources:
   - from: usb-package
     to: usb-package
+  - from: scripts/post-install-simple.ps1
+    to: scripts/post-install-simple.ps1
 win:
   target:
     - target: portable
       arch:
         - x64
-  artifactName: "Yindo-USB-Video-Vault-${version}-portable.exe"
+    - target: nsis
+      arch:
+        - x64
+    - target: msi
+      arch:
+        - x64
+  artifactName: "USB-Video-Vault-${version}-${os}-${arch}.${ext}"
+  sign: false
+  verifyUpdateCodeSignature: false
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  allowElevation: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: "USB Video Vault"
+  uninstallDisplayName: "USB Video Vault"
+  include: "installer/nsis-installer.nsh"
+  runAfterFinish: false
+msi:
+  oneClick: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  menuCategory: "Multimedia"
+  artifactName: "USB-Video-Vault-${version}-setup.msi"
 mac:
   target:
     - dmg
