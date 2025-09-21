@@ -1,0 +1,20 @@
+﻿{
+    "Results":  {
+                    "LicenseValidation":  true,
+                    "MemoryIssues":  0,
+                    "SignatureErrors":  0,
+                    "AppCrashes":  0,
+                    "AntiRollbackErrors":  0,
+                    "StartupIssues":  0,
+                    "OverallStatus":  "GO"
+                },
+    "Version":  "v1.0.4",
+    "Timestamp":  {
+                      "value":  "\/Date(1758419720845)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "dimanche 21 septembre 2025 01:55:20"
+                  },
+    "NextPhase":  "Ring1",
+    "Decision":  "GO",
+    "Phase":  "Ring0_GoNoGo"
+}
