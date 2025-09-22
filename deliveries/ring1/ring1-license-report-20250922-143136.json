@@ -1,0 +1,34 @@
+﻿{
+    "Timestamp":  {
+                      "value":  "\/Date(1758551496868)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "lundi 22 septembre 2025 14:31:36"
+                  },
+    "TotalFiles":  3,
+    "SuccessCount":  3,
+    "OutputDir":  "deliveries\\ring1",
+    "Results":  [
+                    {
+                        "Fingerprint":  "ALPHA-FP-001",
+                        "LicenseFile":  "CLIENT-ALPHA-PC01-ALPHA-FP-001-license.bin",
+                        "Source":  "CLIENT-ALPHA.json",
+                        "Status":  "SUCCESS",
+                        "Hostname":  "CLIENT-ALPHA-PC01"
+                    },
+                    {
+                        "Fingerprint":  "BETA-FP-002",
+                        "LicenseFile":  "CLIENT-BETA-PC01-BETA-FP-002-license.bin",
+                        "Source":  "CLIENT-BETA.json",
+                        "Status":  "SUCCESS",
+                        "Hostname":  "CLIENT-BETA-PC01"
+                    },
+                    {
+                        "Fingerprint":  "GAMMA-FP-003",
+                        "LicenseFile":  "CLIENT-GAMMA-PC01-GAMMA-FP-003-license.bin",
+                        "Source":  "CLIENT-GAMMA.json",
+                        "Status":  "SUCCESS",
+                        "Hostname":  "CLIENT-GAMMA-PC01"
+                    }
+                ],
+    "FingerprintDir":  "ring1-fingerprints"
+}

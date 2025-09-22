@@ -1,0 +1,28 @@
+﻿{
+    "Timestamp":  {
+                      "value":  "\/Date(1758551326003)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "lundi 22 septembre 2025 14:28:46"
+                  },
+    "TotalFiles":  3,
+    "SuccessCount":  0,
+    "OutputDir":  "deliveries\\ring1",
+    "Results":  [
+                    {
+                        "Status":  "ERROR",
+                        "Error":  "ÔØî Erreur cr├®ation license: PACKAGER_PRIVATE_HEX invalide: 124 chars (attendu: 128)",
+                        "Source":  "CLIENT-ALPHA.json"
+                    },
+                    {
+                        "Status":  "ERROR",
+                        "Error":  "ÔØî Erreur cr├®ation license: PACKAGER_PRIVATE_HEX invalide: 124 chars (attendu: 128)",
+                        "Source":  "CLIENT-BETA.json"
+                    },
+                    {
+                        "Status":  "ERROR",
+                        "Error":  "ÔØî Erreur cr├®ation license: PACKAGER_PRIVATE_HEX invalide: 124 chars (attendu: 128)",
+                        "Source":  "CLIENT-GAMMA.json"
+                    }
+                ],
+    "FingerprintDir":  "ring1-fingerprints"
+}
