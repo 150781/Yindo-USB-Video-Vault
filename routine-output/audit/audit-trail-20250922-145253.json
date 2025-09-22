@@ -1,0 +1,185 @@
+﻿{
+    "ExportDate":  "2025-09-22 14:52:52",
+    "PeriodDays":  "7",
+    "Licenses":  {
+                     "Revoked":  [
+
+                                 ],
+                     "Issued":  [
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\batch-final-20250921-0205\\Machine-Dev-Windows-HW123456-license.bin",
+                                        "Directory":  "batch-final-20250921-0205",
+                                        "File":  "Machine-Dev-Windows-HW123456-license.bin",
+                                        "Size":  428,
+                                        "IssuedDate":  "2025-09-21 02:05:55"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\batch-final-20250921-0205\\Machine-Test-Linux-HW789012-license.bin",
+                                        "Directory":  "batch-final-20250921-0205",
+                                        "File":  "Machine-Test-Linux-HW789012-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 02:05:55"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\final-demo\\Machine-Dev-Windows-HW123456-license.bin",
+                                        "Directory":  "final-demo",
+                                        "File":  "Machine-Dev-Windows-HW123456-license.bin",
+                                        "Size":  428,
+                                        "IssuedDate":  "2025-09-21 02:24:50"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\final-demo\\Machine-Test-Linux-HW789012-license.bin",
+                                        "Directory":  "final-demo",
+                                        "File":  "Machine-Test-Linux-HW789012-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 02:24:50"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\ring1\\CLIENT-ALPHA-PC01-ALPHA-FP-001-license.bin",
+                                        "Directory":  "ring1",
+                                        "File":  "CLIENT-ALPHA-PC01-ALPHA-FP-001-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-22 14:31:35"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\ring1\\CLIENT-BETA-PC01-BETA-FP-002-license.bin",
+                                        "Directory":  "ring1",
+                                        "File":  "CLIENT-BETA-PC01-BETA-FP-002-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-22 14:31:35"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\ring1\\CLIENT-GAMMA-PC01-GAMMA-FP-003-license.bin",
+                                        "Directory":  "ring1",
+                                        "File":  "CLIENT-GAMMA-PC01-GAMMA-FP-003-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-22 14:31:36"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\DEV-LAPTOP-DEV-LAPTOP-001-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "DEV-LAPTOP-DEV-LAPTOP-001-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-21 02:07:24"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\DEV-LAPTOP-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "DEV-LAPTOP-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-21 02:07:43"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\LAPTOP-01-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "LAPTOP-01-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-21 01:01:18"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\LAPTOP-02-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "LAPTOP-02-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-21 01:01:19"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\PC-DEV-01-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "PC-DEV-01-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-21 01:01:15"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\PC-DEV-02-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "PC-DEV-02-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 01:01:15"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\PC-DEV-03-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "PC-DEV-03-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 01:01:16"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\PC-QA-01-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "PC-QA-01-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-21 01:01:16"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\PC-QA-02-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "PC-QA-02-license.bin",
+                                        "Size":  436,
+                                        "IssuedDate":  "2025-09-21 01:01:17"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\PC-TEST-01-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "PC-TEST-01-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 01:01:17"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\PC-TEST-02-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "PC-TEST-02-license.bin",
+                                        "Size":  440,
+                                        "IssuedDate":  "2025-09-21 01:01:18"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\QA-DESKTOP-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "QA-DESKTOP-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 02:07:43"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\QA-DESKTOP-QA-DESKTOP-002-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "QA-DESKTOP-QA-DESKTOP-002-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 02:07:25"
+                                    },
+                                    {
+                                        "Path":  "C:\\Users\\patok\\Documents\\Yindo-USB-Video-Vault\\deliveries\\WORKSTATION-01-license.bin",
+                                        "Directory":  "deliveries",
+                                        "File":  "WORKSTATION-01-license.bin",
+                                        "Size":  432,
+                                        "IssuedDate":  "2025-09-21 01:01:19"
+                                    }
+                                ],
+                     "Delivered":  [
+
+                                   ],
+                     "Activated":  [
+                                       {
+                                           "Timestamp":  "",
+                                           "LogEntry":  {
+                                                            "value":  "[2025-09-19T22:30:02.400Z] [LICENSE] Licence validee avec succes",
+                                                            "PSPath":  "C:\\Users\\patok\\AppData\\Roaming\\USB Video Vault\\logs\\main.log",
+                                                            "PSParentPath":  "C:\\Users\\patok\\AppData\\Roaming\\USB Video Vault\\logs",
+                                                            "PSChildName":  "main.log",
+                                                            "PSDrive":  "C",
+                                                            "PSProvider":  "Microsoft.PowerShell.Core\\FileSystem",
+                                                            "ReadCount":  7
+                                                        }
+                                       }
+                                   ]
+                 },
+    "Summary":  {
+                    "TotalDelivered":  0,
+                    "TotalActivated":  1,
+                    "PendingActivation":  20,
+                    "TotalIssued":  21,
+                    "Issues":  [
+                                   "âš ï¸ 20 licence(s) Ã©mise(s) non activÃ©e(s)"
+                               ],
+                    "TotalRevoked":  0
+                }
+}

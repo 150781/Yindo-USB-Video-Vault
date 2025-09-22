@@ -1,0 +1,55 @@
+﻿{
+    "Summary":  {
+                    "Critical":  0,
+                    "Failures":  0,
+                    "Warnings":  2,
+                    "Total":  6,
+                    "Passed":  4
+                },
+    "Timestamp":  "2025-09-22 14:57:26",
+    "OverallStatus":  "MINOR WARNINGS",
+    "Checks":  [
+                   {
+                       "Status":  "WARN",
+                       "Timestamp":  "2025-09-22 14:57:26",
+                       "Details":  "No USB Video Vault process found",
+                       "Critical":  false,
+                       "Check":  "Application Running"
+                   },
+                   {
+                       "Status":  "WARN",
+                       "Timestamp":  "2025-09-22 14:57:26",
+                       "Details":  "License file not found",
+                       "Critical":  false,
+                       "Check":  "License File"
+                   },
+                   {
+                       "Status":  "PASS",
+                       "Timestamp":  "2025-09-22 14:57:26",
+                       "Details":  "No errors in last 200 log lines",
+                       "Critical":  false,
+                       "Check":  "Recent Errors"
+                   },
+                   {
+                       "Status":  "PASS",
+                       "Timestamp":  "2025-09-22 14:57:26",
+                       "Details":  "Latest audit: 0 days ago",
+                       "Critical":  false,
+                       "Check":  "Audit Trail"
+                   },
+                   {
+                       "Status":  "PASS",
+                       "Timestamp":  "2025-09-22 14:57:26",
+                       "Details":  "Latest backup: 0 days ago",
+                       "Critical":  false,
+                       "Check":  "Key Backup"
+                   },
+                   {
+                       "Status":  "PASS",
+                       "Timestamp":  "2025-09-22 14:57:26",
+                       "Details":  "SBOM age: 1 days",
+                       "Critical":  false,
+                       "Check":  "SBOM Currency"
+                   }
+               ]
+}
