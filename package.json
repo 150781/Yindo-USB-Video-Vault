@@ -1,6 +1,8 @@
 ﻿{
     "name":  "usb-video-vault",
     "version":  "1.0.4",
+    "author":  "Yindo",
+    "description":  "USB Video Vault for Windows",
     "private":  true,
     "main":  "dist/main/index.js",
     "type":  "module",
