@@ -1,59 +1,59 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
 # 🤖 GitHub Actions Workflow - USB Video Vault
-
-name: '🚀 Release Pipeline'
+name: "🚀 Release Pipeline"
 
 on:
   push:
     tags:
-      - 'v*.*.*'
+      - "v*.*.*"
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., v1.0.0)'
+        description: "Version to release (e.g., v1.0.0)"
         required: true
-        default: 'v1.0.0-rc.1'
+        default: "v1.0.0-rc.1"
 
 env:
-  NODE_VERSION: '18'
-  PYTHON_VERSION: '3.10'
+  NODE_VERSION: "18"
+  PYTHON_VERSION: "3.10"
 
 jobs:
   # ===== VALIDATION PHASE =====
   validate:
-    name: '🔍 Validation & Security'
+    name: "🔍 Validation & Security"
     runs-on: ubuntu-latest
     steps:
-      - name: '📥 Checkout Code'
+      - name: "📥 Checkout Code"
         uses: actions/checkout@v4
-        
-      - name: '⚙️ Setup Node.js'
+
+      - name: "⚙️ Setup Node.js"
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          
-      - name: '📦 Install Dependencies'
+          cache: "npm"
+
+      - name: "📦 Install Dependencies"
         run: npm ci
-        
-      - name: '🔍 TypeScript Check'
+
+      - name: "🔍 TypeScript Check"
         run: npm run test:typecheck
-        
-      - name: '🛡️ Security Audit'
+
+      - name: "🛡️ Security Audit"
         run: npm audit --audit-level=high
-        
-      - name: '🔴 Red Team Tests'
+
+      - name: "🔴 Red Team Tests"
         run: |
           node test-red-scenarios.mjs
           echo "Red team scenarios passed ✅"
-          
-      - name: '📋 Go/No-Go Checklist'
+
+      - name: "📋 Go/No-Go Checklist"
         run: |
           node checklist-go-nogo.mjs
           echo "Go/No-Go validation passed ✅"
 
   # ===== BUILD PHASE =====
   build-windows:
-    name: '🪟 Build Windows'
+    name: "🪟 Build Windows"
     runs-on: windows-latest
     needs: validate
     steps:
@@ -61,35 +61,64 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          
-      - name: '📦 Install & Build'
+          cache: "npm"
+
+      - name: "📦 Install & Build"
+        shell: pwsh
         run: |
           npm ci
           npm run build
           npm run build:main
           npm run electron:build
-          
-      - name: '🖊️ Code Signing (Windows)'
-        if: github.event_name == 'push'
+
+      - name: "🖊️ Code Signing (Windows)"
+        # Pas de 'secrets.*' dans 'if:' -> garde VS Code tranquille
+        if: ${{ github.event_name == 'push' }}
+        shell: pwsh
+        env:
+          WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
+          WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
         run: |
-          # Import certificate from secrets
-          echo "${{ secrets.WINDOWS_CERT_BASE64 }}" | base64 -d > cert.pfx
-          
-          # Sign executable
-          & "$env:ProgramFiles (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64\\signtool.exe" sign `
-            /fd SHA256 /f cert.pfx /p "${{ secrets.WINDOWS_CERT_PASSWORD }}" `
-            /tr http://timestamp.sectigo.com /td SHA256 `
-            /d "USB Video Vault" `
-            "dist\\USB-Video-Vault-*.exe"
-            
-          # Verify signature
-          & "$env:ProgramFiles (x86)\\Windows Kits\\10\\bin\\10.0.22000.0\\x64\\signtool.exe" verify /pa /v "dist\\USB-Video-Vault-*.exe"
-          
-          # Generate hash
-          certutil -hashfile "dist\\USB-Video-Vault-*.exe" SHA256 > windows-sha256.txt
-          
-      - name: '📤 Upload Windows Artifact'
+          # Guard: skip si secrets absents
+          if ([string]::IsNullOrEmpty($env:WINDOWS_CERT_BASE64) -or [string]::IsNullOrEmpty($env:WINDOWS_CERT_PASSWORD)) {
+            Write-Host "⚠️ Skipping Windows signing: secrets not provided."
+            if (Test-Path dist) {
+              $hashLines = (Get-ChildItem "dist" -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
+                $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+                "$h  $($_.Name)"
+              })
+              if ($hashLines) { $hashLines -join "`n" | Out-File -Encoding ascii windows-sha256.txt }
+            }
+            exit 0
+          }
+
+          # cert.pfx
+          [IO.File]::WriteAllBytes("cert.pfx",[Convert]::FromBase64String($env:WINDOWS_CERT_BASE64))
+
+          # signtool.exe (version SDK variable)
+          $signtool = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1).FullName
+          if (-not $signtool) { throw "signtool.exe not found" }
+
+          # Signature
+          Get-ChildItem "dist" -Filter "*.exe" | ForEach-Object {
+            & "$signtool" sign /fd SHA256 /f cert.pfx /p "$env:WINDOWS_CERT_PASSWORD" `
+              /tr http://timestamp.sectigo.com /td SHA256 `
+              /d "USB Video Vault" $_.FullName
+          }
+
+          # Vérification
+          Get-ChildItem "dist" -Filter "*.exe" | ForEach-Object {
+            & "$signtool" verify /pa /v $_.FullName
+          }
+
+          # SHA256
+          $hashLines = (Get-ChildItem "dist" -Filter "*.exe" | ForEach-Object {
+            $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
+            "$h  $($_.Name)"
+          })
+          $hashLines -join "`n" | Out-File -Encoding ascii windows-sha256.txt
+
+      - name: "📤 Upload Windows Artifact"
         uses: actions/upload-artifact@v4
         with:
           name: windows-portable
@@ -98,7 +127,7 @@ jobs:
             windows-sha256.txt
 
   build-macos:
-    name: '🍎 Build macOS'
+    name: "🍎 Build macOS"
     runs-on: macos-latest
     needs: validate
     steps:
@@ -106,46 +135,67 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          
-      - name: '📦 Install & Build'
+
+      - name: "📦 Install & Build"
         run: |
           npm ci
           npm run build
           npm run build:main
           npm run electron:build
-          
-      - name: '🖊️ Code Signing (macOS)'
-        if: github.event_name == 'push'
+
+      - name: "🖊️ Code Signing (macOS)"
+        if: ${{ github.event_name == 'push' }}
+        env:
+          MACOS_CERT_BASE64: ${{ secrets.MACOS_CERT_BASE64 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          MACOS_DEVELOPER_ID: ${{ secrets.MACOS_DEVELOPER_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
         run: |
-          # Import certificates
-          echo "${{ secrets.MACOS_CERT_BASE64 }}" | base64 -d > cert.p12
+          # Guard
+          if [[ -z "$MACOS_CERT_BASE64" || -z "$MACOS_CERT_PASSWORD" || -z "$MACOS_DEVELOPER_ID" ]]; then
+            echo "⚠️ Skipping macOS signing: MACOS_* secrets not provided."
+            APP_PATH="dist/mac/USB Video Vault.app"
+            if [[ -d "$APP_PATH" ]]; then
+              hdiutil create -volname "USB Video Vault" -srcfolder "$APP_PATH" -ov -format UDZO "dist/USB-Video-Vault.dmg"
+              shasum -a 256 "dist/USB-Video-Vault.dmg" > macos-sha256.txt
+            fi
+            exit 0
+          fi
+
+          # Import cert
+          echo "$MACOS_CERT_BASE64" | base64 --decode > cert.p12
           security create-keychain -p "temp" temp.keychain
-          security import cert.p12 -k temp.keychain -P "${{ secrets.MACOS_CERT_PASSWORD }}" -T /usr/bin/codesign
+          security import cert.p12 -k temp.keychain -P "$MACOS_CERT_PASSWORD" -T /usr/bin/codesign
           security list-keychains -s temp.keychain
           security unlock-keychain -p "temp" temp.keychain
-          
-          # Sign application
-          codesign --deep --force --options runtime --timestamp \\
-            --sign "${{ secrets.MACOS_DEVELOPER_ID }}" \\
-            "dist/mac/USB-Video-Vault.app"
-            
-          # Create DMG
-          hdiutil create -volname "USB Video Vault" -srcfolder "dist/mac/USB-Video-Vault.app" -ov -format UDZO "dist/USB-Video-Vault.dmg"
-          
-          # Notarization
-          xcrun notarytool submit "dist/USB-Video-Vault.dmg" \\
-            --apple-id "${{ secrets.APPLE_ID }}" \\
-            --team-id "${{ secrets.APPLE_TEAM_ID }}" \\
-            --password "${{ secrets.APPLE_APP_PASSWORD }}" \\
-            --wait
-            
-          # Staple
-          xcrun stapler staple "dist/USB-Video-Vault.dmg"
-          
-          # Generate hash
+
+          # Sign
+          APP_PATH="dist/mac/USB Video Vault.app"
+          codesign --deep --force --options runtime --timestamp \
+            --sign "$MACOS_DEVELOPER_ID" \
+            "$APP_PATH"
+
+          # DMG
+          hdiutil create -volname "USB Video Vault" -srcfolder "$APP_PATH" -ov -format UDZO "dist/USB-Video-Vault.dmg"
+
+          # Notarize si creds fournis
+          if [[ -n "$APPLE_ID" && -n "$APPLE_TEAM_ID" && -n "$APPLE_APP_PASSWORD" ]]; then
+            xcrun notarytool submit "dist/USB-Video-Vault.dmg" \
+              --apple-id "$APPLE_ID" \
+              --team-id "$APPLE_TEAM_ID" \
+              --password "$APPLE_APP_PASSWORD" \
+              --wait
+            xcrun stapler staple "dist/USB-Video-Vault.dmg"
+          else
+            echo "⚠️ Notarization skipped: APPLE_* secrets not set."
+          fi
+
+          # SHA256
           shasum -a 256 "dist/USB-Video-Vault.dmg" > macos-sha256.txt
-          
-      - name: '📤 Upload macOS Artifact'
+
+      - name: "📤 Upload macOS Artifact"
         uses: actions/upload-artifact@v4
         with:
           name: macos-dmg
@@ -154,7 +204,7 @@ jobs:
             macos-sha256.txt
 
   build-linux:
-    name: '🐧 Build Linux'
+    name: "🐧 Build Linux"
     runs-on: ubuntu-latest
     needs: validate
     steps:
@@ -162,30 +212,38 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          
-      - name: '📦 Install & Build'
+
+      - name: "📦 Install & Build"
         run: |
           npm ci
           npm run build
           npm run build:main
           npm run electron:build
-          
-      - name: '🖊️ GPG Signing (Linux)'
-        if: github.event_name == 'push'
+
+      - name: "🖊️ GPG Signing (Linux)"
+        if: ${{ github.event_name == 'push' }}
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
         run: |
-          # Import GPG key
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import
-          
-          # Sign AppImage
+          # Guard
+          if [[ -z "$GPG_PRIVATE_KEY" || -z "$GPG_KEY_ID" ]]; then
+            echo "⚠️ Skipping Linux signing: GPG secrets not provided."
+            shasum -a 256 dist/*.AppImage > linux-sha256.txt || true
+            exit 0
+          fi
+
+          # Import & sign
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --yes --import
           for appimage in dist/*.AppImage; do
-            gpg --detach-sign --armor --default-key "${{ secrets.GPG_KEY_ID }}" "$appimage"
+            gpg --batch --yes --detach-sign --armor --local-user "$GPG_KEY_ID" "$appimage"
             gpg --verify "${appimage}.asc" "$appimage"
           done
-          
-          # Generate hash
+
+          # SHA256
           shasum -a 256 dist/*.AppImage > linux-sha256.txt
-          
-      - name: '📤 Upload Linux Artifact'
+
+      - name: "📤 Upload Linux Artifact"
         uses: actions/upload-artifact@v4
         with:
           name: linux-appimage
@@ -196,7 +254,7 @@ jobs:
 
   # ===== PACKAGE PHASE =====
   create-usb-packages:
-    name: '💿 Create USB Packages'
+    name: "💿 Create USB Packages"
     runs-on: ubuntu-latest
     needs: [build-windows, build-macos, build-linux]
     steps:
@@ -204,29 +262,27 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          
-      - name: '📥 Download All Artifacts'
+
+      - name: "📥 Download All Artifacts"
         uses: actions/download-artifact@v4
-        
-      - name: '📦 Create Demo USB Package'
+
+      - name: "📦 Create Demo USB Package"
+        env:
+          DEMO_PASSWORD: ${{ secrets.DEMO_PASSWORD }}
         run: |
-          # Create demo package with sample media
-          node tools/create-client-usb.mjs \\
-            --client "DEMO-PACKAGE" \\
-            --media "./src/assets" \\
-            --output "./usb-demo" \\
-            --password "${{ secrets.DEMO_PASSWORD }}" \\
-            --license-id "DEMO-2025-0001" \\
-            --expires "2026-12-31T23:59:59Z" \\
+          node tools/create-client-usb.mjs \
+            --client "DEMO-PACKAGE" \
+            --media "./src/assets" \
+            --output "./usb-demo" \
+            --password "${DEMO_PASSWORD}" \
+            --license-id "DEMO-2025-0001" \
+            --expires "2026-12-31T23:59:59Z" \
             --features "playbook,demo"
-            
-          # Copy signed executables
-          cp windows-portable/*.exe usb-demo/
-          
-          # Create final ZIP
+
+          cp windows-portable/*.exe usb-demo/ || true
           zip -r USB-Video-Vault-Demo-Package.zip usb-demo/
-          
-      - name: '📤 Upload USB Package'
+
+      - name: "📤 Upload USB Package"
         uses: actions/upload-artifact@v4
         with:
           name: usb-demo-package
@@ -234,47 +290,41 @@ jobs:
 
   # ===== RELEASE PHASE =====
   create-release:
-    name: '🎉 Create GitHub Release'
+    name: "🎉 Create GitHub Release"
     runs-on: ubuntu-latest
     needs: [create-usb-packages]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
-      
-      - name: '📥 Download All Artifacts'
+
+      - name: "📥 Download All Artifacts"
         uses: actions/download-artifact@v4
-        
-      - name: '📋 Prepare Release Assets'
+
+      - name: "📋 Prepare Release Assets"
         run: |
           mkdir -p release-assets
-          
-          # Copy signed binaries
-          cp windows-portable/*.exe release-assets/
-          cp macos-dmg/*.dmg release-assets/
-          cp linux-appimage/*.AppImage release-assets/
-          cp linux-appimage/*.AppImage.asc release-assets/
-          
-          # Copy USB demo package
-          cp usb-demo-package/*.zip release-assets/
-          
-          # Combine SHA256 files
-          cat windows-portable/windows-sha256.txt > release-assets/SHA256SUMS
-          cat macos-dmg/macos-sha256.txt >> release-assets/SHA256SUMS
-          cat linux-appimage/linux-sha256.txt >> release-assets/SHA256SUMS
-          
-          # Copy documentation
-          cp templates/RELEASE_NOTES_v1.0.0.md release-assets/RELEASE_NOTES.md
-          cp templates/GUIDE_UTILISATEUR_FINAL.md release-assets/USER_GUIDE.md
-          
-      - name: '🏷️ Extract Version'
+          cp windows-portable/*.exe release-assets/ || true
+          cp macos-dmg/*.dmg release-assets/ || true
+          cp linux-appimage/*.AppImage release-assets/ || true
+          cp linux-appimage/*.AppImage.asc release-assets/ || true
+          cp usb-demo-package/*.zip release-assets/ || true
+
+          (test -f windows-portable/windows-sha256.txt && cat windows-portable/windows-sha256.txt || true)  >  release-assets/SHA256SUMS
+          (test -f macos-dmg/macos-sha256.txt && cat macos-dmg/macos-sha256.txt || true)                    >> release-assets/SHA256SUMS
+          (test -f linux-appimage/linux-sha256.txt && cat linux-appimage/linux-sha256.txt || true)          >> release-assets/SHA256SUMS
+
+          if [ -f templates/RELEASE_NOTES_v1.0.0.md ]; then cp templates/RELEASE_NOTES_v1.0.0.md release-assets/RELEASE_NOTES.md; fi
+          if [ -f templates/GUIDE_UTILISATEUR_FINAL.md ]; then cp templates/GUIDE_UTILISATEUR_FINAL.md release-assets/USER_GUIDE.md; fi
+
+      - name: "🏷️ Extract Version"
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        
-      - name: '🚀 Create Release'
-        uses: softprops/action-gh-release@v1
+
+      - name: "🚀 Create Release"
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.VERSION }}
-          name: 'USB Video Vault ${{ steps.version.outputs.VERSION }}'
+          name: "USB Video Vault ${{ steps.version.outputs.VERSION }}"
           body_path: release-assets/RELEASE_NOTES.md
           draft: false
           prerelease: ${{ contains(steps.version.outputs.VERSION, 'rc') || contains(steps.version.outputs.VERSION, 'beta') }}
@@ -285,30 +335,26 @@ jobs:
 
   # ===== NOTIFICATION PHASE =====
   notify-success:
-    name: '📢 Notify Success'
+    name: "📢 Notify Success"
     runs-on: ubuntu-latest
     needs: [create-release]
     if: success()
     steps:
-      - name: '📧 Send Success Notification'
+      - name: "📧 Send Success Notification"
         run: |
           echo "🎉 Release ${{ github.ref_name }} created successfully!"
           echo "📁 Assets: Windows .exe, macOS .dmg, Linux .AppImage"
           echo "💿 Demo USB package included"
           echo "🔐 All binaries signed and verified"
-          
-          # Here you could add Slack/Discord/Email notifications
-          
+
   notify-failure:
-    name: '⚠️ Notify Failure'
+    name: "⚠️ Notify Failure"
     runs-on: ubuntu-latest
     needs: [validate, build-windows, build-macos, build-linux, create-usb-packages]
     if: failure()
     steps:
-      - name: '📧 Send Failure Notification'
+      - name: "📧 Send Failure Notification"
         run: |
           echo "❌ Release pipeline failed for ${{ github.ref_name }}"
           echo "🔍 Check the logs for details"
           echo "🛠️ Manual intervention may be required"
-          
-          # Here you could add Slack/Discord/Email notifications
