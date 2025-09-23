@@ -72,7 +72,7 @@ jobs:
           npm run electron:build
 
       - name: "🖊️ Code Signing (Windows)"
-        # Pas de 'secrets.*' dans 'if:' -> garde VS Code tranquille
+        # Garder un if simple évite l'erreur VS Code
         if: ${{ github.event_name == 'push' }}
         shell: pwsh
         env:
@@ -92,22 +92,18 @@ jobs:
             exit 0
           }
 
-          # cert.pfx
+          # Decode cert
           [IO.File]::WriteAllBytes("cert.pfx",[Convert]::FromBase64String($env:WINDOWS_CERT_BASE64))
 
-          # signtool.exe (version SDK variable)
+          # signtool.exe (SDK version variable)
           $signtool = (Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1).FullName
           if (-not $signtool) { throw "signtool.exe not found" }
 
-          # Signature
+          # Sign & verify
           Get-ChildItem "dist" -Filter "*.exe" | ForEach-Object {
             & "$signtool" sign /fd SHA256 /f cert.pfx /p "$env:WINDOWS_CERT_PASSWORD" `
               /tr http://timestamp.sectigo.com /td SHA256 `
               /d "USB Video Vault" $_.FullName
-          }
-
-          # Vérification
-          Get-ChildItem "dist" -Filter "*.exe" | ForEach-Object {
             & "$signtool" verify /pa /v $_.FullName
           }
 
@@ -180,7 +176,7 @@ jobs:
           # DMG
           hdiutil create -volname "USB Video Vault" -srcfolder "$APP_PATH" -ov -format UDZO "dist/USB-Video-Vault.dmg"
 
-          # Notarize si creds fournis
+          # Notarization (si creds Apple présents)
           if [[ -n "$APPLE_ID" && -n "$APPLE_TEAM_ID" && -n "$APPLE_APP_PASSWORD" ]]; then
             xcrun notarytool submit "dist/USB-Video-Vault.dmg" \
               --apple-id "$APPLE_ID" \
