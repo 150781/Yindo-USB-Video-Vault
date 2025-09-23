@@ -1,6 +1,6 @@
-{
+﻿{
     "name":  "usb-video-vault",
-    "version":  "1.0.3-test",
+    "version":  "1.0.4-test",
     "private":  true,
     "main":  "dist/main/index.js",
     "type":  "module",
@@ -36,7 +36,10 @@
                     "test:typecheck":  "tsc --noEmit",
                     "test:security":  "tsx test/test-security-complete.test.ts",
                     "test:hardening":  "tsx test/test-security-hardening.test.ts",
-                    "test:direct":  "npm run test:typecheck \u0026\u0026 npm run test:security \u0026\u0026 npm run test:hardening"
+                    "test:direct":  "npm run test:typecheck \u0026\u0026 npm run test:security \u0026\u0026 npm run test:hardening",
+                    "test:license-security":  "node tests/license-security.test.js",
+                    "test:license-security:verbose":  "node tests/license-security.test.js --verbose",
+                    "test:ci":  "npm run build \u0026\u0026 npm run test:license-security"
                 },
     "build":  {
                   "appId":  "com.yindo.usbvideovault",
