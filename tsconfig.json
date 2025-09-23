@@ -2,7 +2,10 @@
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM"],
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
     "module": "ES2022",
     "skipLibCheck": true,
     "moduleResolution": "Bundler",
@@ -10,13 +13,19 @@
     "strict": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "types": ["vite/client", "node"],
+    "types": [
+      "vite/client",
+      "node",
+      "react",
+      "react-dom"
+    ],
     "resolveJsonModule": true,
+    "noImplicitAny": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src/renderer", 
+    "src/renderer",
     "src/types",
     "src/main",
     "src/shared",

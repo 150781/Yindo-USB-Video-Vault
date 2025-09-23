@@ -1,0 +1,113 @@
+{
+    "Results":  [
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666883)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "PC-DEV-01"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666887)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "PC-DEV-02"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666898)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "PC-DEV-03"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666905)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "PC-QA-01"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666911)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "PC-QA-02"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666918)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "PC-TEST-01"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666923)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "PC-TEST-02"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666928)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "LAPTOP-01"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666935)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "LAPTOP-02"
+                    },
+                    {
+                        "Output":  "Installation simulee - encodage corrige requis",
+                        "Status":  "SIMULATED",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758416666940)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                                      },
+                        "Machine":  "WORKSTATION-01"
+                    }
+                ],
+    "Version":  "v1.0.4",
+    "Timestamp":  {
+                      "value":  "\/Date(1758416666940)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "dimanche 21 septembre 2025 01:04:26"
+                  },
+    "TotalMachines":  10,
+    "SuccessfulDeployments":  10,
+    "Phase":  "Ring0_Deployment"
+}

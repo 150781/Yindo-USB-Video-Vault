@@ -1,0 +1,19 @@
+{
+    "CrashRate":  {
+                      "Total":  0,
+                      "Rate":  0,
+                      "Count":  0
+                  },
+    "Performance":  {
+                        "StartupTime":  0,
+                        "Running":  false,
+                        "MemoryMB":  0
+                    },
+    "LicenseErrors":  {
+                          "Total":  1,
+                          "Rate":  0,
+                          "Count":  0
+                      },
+    "AllOK":  true,
+    "Timestamp":  "2025-09-22 14:46:59"
+}

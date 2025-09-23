@@ -1,0 +1,27 @@
+{
+    "Timestamp":  {
+                      "value":  "\/Date(1758420446118)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "dimanche 21 septembre 2025 02:07:26"
+                  },
+    "TotalFiles":  2,
+    "SuccessCount":  2,
+    "OutputDir":  "deliveries",
+    "Results":  [
+                    {
+                        "Fingerprint":  "DEV-LAPTOP-001",
+                        "LicenseFile":  "DEV-LAPTOP-DEV-LAPTOP-001-license.bin",
+                        "Source":  "DEV-LAPTOP.json",
+                        "Status":  "SUCCESS",
+                        "Hostname":  "DEV-LAPTOP"
+                    },
+                    {
+                        "Fingerprint":  "QA-DESKTOP-002",
+                        "LicenseFile":  "QA-DESKTOP-QA-DESKTOP-002-license.bin",
+                        "Source":  "QA-DESKTOP.json",
+                        "Status":  "SUCCESS",
+                        "Hostname":  "QA-DESKTOP"
+                    }
+                ],
+    "FingerprintDir":  "fingerprints-ring0"
+}

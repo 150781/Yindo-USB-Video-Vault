@@ -1,0 +1,68 @@
+{
+    "Mode":  "PRODUCTION",
+    "RollbackTest":  {
+                         "Mechanism":  "Version-Based",
+                         "Status":  "OK",
+                         "CurrentVersion":  "v1.0.4",
+                         "MinVersion":  "v1.0.0"
+                     },
+    "OverallStatus":  "PASSED",
+    "Version":  "v1.0.4",
+    "SignatureTest":  {
+                          "TestFile":  "test-output\\test-signature.txt",
+                          "Status":  "OK",
+                          "Timestamp":  "2025-09-21 02:40:12",
+                          "Algorithm":  "SHA256"
+                      },
+    "Timestamp":  "2025-09-21 02:40:12",
+    "Keys":  [
+                 {
+                     "Status":  "OK",
+                     "Key":  "Private",
+                     "Path":  "scripts\\keys\\private.pem"
+                 },
+                 {
+                     "Status":  "OK",
+                     "Key":  "Public",
+                     "Path":  "scripts\\keys\\public.pem"
+                 }
+             ],
+    "Artifacts":  [
+                      {
+                          "Status":  "OK",
+                          "File":  "dist\\USB-Video-Vault-Setup.exe",
+                          "Size":  42,
+                          "LastModified":  "2025-09-21 00:45:27"
+                      },
+                      {
+                          "Status":  "OK",
+                          "File":  "dist\\USB-Video-Vault-Setup.msi",
+                          "Size":  42,
+                          "LastModified":  "2025-09-21 00:45:33"
+                      },
+                      {
+                          "Status":  "OK",
+                          "File":  "usb-package\\USB-Video-Vault-0.1.0-portable.exe",
+                          "Size":  144597744,
+                          "LastModified":  "2025-09-20 10:00:52"
+                      }
+                  ],
+    "Hashes":  {
+                   "Status":  "OK",
+                   "Path":  "dist\\hashes-v1.0.4.txt"
+               },
+    "SBOM":  {
+                 "Status":  "OK",
+                 "Path":  "dist\\sbom-v1.0.4.json"
+             },
+    "IncidentTest":  {
+                         "Version":  "v1.0.4",
+                         "Timestamp":  "2025-09-21 02:40:12",
+                         "ID":  "INC-20250921-024012",
+                         "Type":  "SIMULATION",
+                         "RollbackVersion":  "v1.0.3",
+                         "Description":  "Test simulation incident de securite",
+                         "Status":  "SIMULATED",
+                         "Severity":  "HIGH"
+                     }
+}

@@ -1,0 +1,27 @@
+{
+    "Timestamp":  {
+                      "value":  "\/Date(1758421490598)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "dimanche 21 septembre 2025 02:24:50"
+                  },
+    "TotalFiles":  2,
+    "SuccessCount":  2,
+    "OutputDir":  "deliveries\\final-demo",
+    "Results":  [
+                    {
+                        "Fingerprint":  "HW123456",
+                        "LicenseFile":  "Machine-Dev-Windows-HW123456-license.bin",
+                        "Source":  "CLIENT-001.json",
+                        "Status":  "SUCCESS",
+                        "Hostname":  "Machine-Dev-Windows"
+                    },
+                    {
+                        "Fingerprint":  "HW789012",
+                        "LicenseFile":  "Machine-Test-Linux-HW789012-license.bin",
+                        "Source":  "CLIENT-002.json",
+                        "Status":  "SUCCESS",
+                        "Hostname":  "Machine-Test-Linux"
+                    }
+                ],
+    "FingerprintDir":  "fingerprints-test"
+}

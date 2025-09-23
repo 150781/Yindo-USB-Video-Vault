@@ -12,10 +12,10 @@ function Write-LogMessage {
     param([string]$Message, [string]$Level = "INFO")
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $prefix = switch ($Level) {
-        "ERROR" { "❌" }
-        "WARN"  { "⚠️" }
-        "OK"    { "✅" }
-        default { "ℹ️" }
+        "ERROR" { "[ERROR]" }
+        "WARN"  { "[WARN] " }
+        "OK"    { "[OK]   " }
+        default { "[INFO] " }
     }
     Write-Host "[$timestamp] $prefix $Message"
 }
@@ -102,11 +102,11 @@ function Install-License {
         $targetSize = (Get-Item $targetLicense).Length
         
         if ($sourceSize -eq $targetSize) {
-            Write-LogMessage "Licence installée avec succès: $targetLicense ($targetSize bytes)" "OK"
+            Write-LogMessage "Licence installee avec succes: $targetLicense ($targetSize bytes)" "OK"
             return $true
         } else {
-            Write-LogMessage "Erreur d'intégrité lors de la copie (tailles différentes)" "ERROR"
-            throw "Erreur d'intégrité"
+            Write-LogMessage "Erreur d'integrite lors de la copie (tailles differentes)" "ERROR"
+            throw "Erreur d'integrite"
         }
         
     } catch {
@@ -188,12 +188,12 @@ try {
         Write-Host "   • L'application USB Video Vault peut maintenant être lancée" -ForegroundColor Green
         
     } else {
-        Write-LogMessage "=== ÉCHEC DE L'INSTALLATION POST-INSTALL ===" "ERROR"
+        Write-LogMessage "=== ECHEC DE L'INSTALLATION POST-INSTALL ===" "ERROR"
         exit 1
     }
     
 } catch {
     Write-LogMessage "ERREUR CRITIQUE: $($_.Exception.Message)" "ERROR"
-    Write-LogMessage "Installation post-install échouée" "ERROR"
+    Write-LogMessage "Installation post-install echouee" "ERROR"
     exit 1
 }

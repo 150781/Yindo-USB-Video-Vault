@@ -1,0 +1,31 @@
+{
+    "IntegrityTests":  [
+                           {
+                               "Valid":  true,
+                               "Key":  "Private",
+                               "Size":  25
+                           },
+                           {
+                               "Valid":  true,
+                               "Key":  "Public",
+                               "Size":  24
+                           }
+                       ],
+    "Timestamp":  "2025-09-21 02:40:12",
+    "KeyStatus":  [
+                      {
+                          "Status":  "OK",
+                          "Key":  "Private",
+                          "Path":  "scripts\\keys\\private.pem"
+                      },
+                      {
+                          "Status":  "OK",
+                          "Key":  "Public",
+                          "Path":  "scripts\\keys\\public.pem"
+                      }
+                  ],
+    "OverallStatus":  "OK",
+    "KeysPath":  "scripts\\keys",
+    "Mode":  "CHECK",
+    "BackupPath":  "scripts\\keys\\backup"
+}

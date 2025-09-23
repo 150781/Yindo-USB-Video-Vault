@@ -3,13 +3,13 @@
 
 param(
     [string]$Version = "1.0.3",
-    [switch]$SkipBuild = $false,
-    [switch]$Portable = $true,
-    [switch]$NSIS = $true,
-    [switch]$MSI = $true,
-    [switch]$InnoSetup = $false,
+    [switch]$SkipBuild,
+    [switch]$Portable,
+    [switch]$NSIS,
+    [switch]$MSI,
+    [switch]$InnoSetup,
     [string]$LicensePath = "",
-    [switch]$Clean = $false
+    [switch]$Clean
 )
 
 function Write-BuildLog {
@@ -84,7 +84,7 @@ function Invoke-ElectronBuild {
     }
 }
 
-function Build-PortableVersion {
+function New-PortableVersion {
     if ($Portable) {
         Write-BuildLog "=== Génération version portable ===" "INFO"
         npx electron-builder --win portable
@@ -96,7 +96,7 @@ function Build-PortableVersion {
     }
 }
 
-function Build-NSISInstaller {
+function New-NSISInstaller {
     if ($NSIS) {
         Write-BuildLog "=== Génération installateur NSIS ===" "INFO"
         npx electron-builder --win nsis
@@ -108,7 +108,7 @@ function Build-NSISInstaller {
     }
 }
 
-function Build-MSIInstaller {
+function New-MSIInstaller {
     if ($MSI) {
         Write-BuildLog "=== Génération installateur MSI ===" "INFO"
         npx electron-builder --win msi
@@ -120,7 +120,7 @@ function Build-MSIInstaller {
     }
 }
 
-function Build-InnoSetupInstaller {
+function New-InnoSetupInstaller {
     if ($InnoSetup) {
         Write-BuildLog "=== Génération installateur Inno Setup ===" "INFO"
         
@@ -160,7 +160,7 @@ function Show-BuildSummary {
     }
 }
 
-function Clean-BuildArtifacts {
+function Remove-BuildArtifacts {
     if ($Clean) {
         Write-BuildLog "=== Nettoyage des artefacts ===" "INFO"
         
@@ -178,11 +178,25 @@ function Clean-BuildArtifacts {
 
 # === EXÉCUTION PRINCIPALE ===
 
+# Initialiser les valeurs par défaut si aucun switch n'est spécifié
+# Vérifier si au moins un switch de build est présent dans les arguments
+$buildSwitchesSpecified = $PSBoundParameters.ContainsKey('Portable') -or 
+                         $PSBoundParameters.ContainsKey('NSIS') -or 
+                         $PSBoundParameters.ContainsKey('MSI') -or 
+                         $PSBoundParameters.ContainsKey('InnoSetup')
+
+if (-not $buildSwitchesSpecified) {
+    Write-BuildLog "Aucun installateur spécifié, utilisation des valeurs par défaut" "INFO"
+    $Portable = $true
+    $NSIS = $true
+    $MSI = $true
+}
+
 try {
     Write-BuildLog "=== DÉBUT DU BUILD INSTALLATEURS v$Version ===" "INFO"
     
     # Nettoyage si demandé
-    Clean-BuildArtifacts
+    Remove-BuildArtifacts
     
     # Vérifications préalables
     if (-not (Test-BuildPrerequisites)) {
@@ -196,10 +210,10 @@ try {
     Invoke-ElectronBuild
     
     # Générer les différents installateurs
-    Build-PortableVersion
-    Build-NSISInstaller
-    Build-MSIInstaller
-    Build-InnoSetupInstaller
+    New-PortableVersion
+    New-NSISInstaller
+    New-MSIInstaller
+    New-InnoSetupInstaller
     
     # Résumé final
     Show-BuildSummary

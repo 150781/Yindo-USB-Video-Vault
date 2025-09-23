@@ -1,0 +1,27 @@
+{
+    "Timestamp":  {
+                      "value":  "\/Date(1758420274713)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "dimanche 21 septembre 2025 02:04:34"
+                  },
+    "TotalFiles":  2,
+    "SuccessCount":  0,
+    "OutputDir":  "deliveries\\batch-test-20250921-0204",
+    "Results":  [
+                    {
+                        "Fingerprint":  "HW123456",
+                        "Status":  "ERROR",
+                        "Error":  "Fichier licence non genere",
+                        "Hostname":  "Machine-Dev-Windows",
+                        "Source":  "CLIENT-001.json"
+                    },
+                    {
+                        "Fingerprint":  "HW789012",
+                        "Status":  "ERROR",
+                        "Error":  "Fichier licence non genere",
+                        "Hostname":  "Machine-Test-Linux",
+                        "Source":  "CLIENT-002.json"
+                    }
+                ],
+    "FingerprintDir":  "fingerprints-test"
+}

@@ -1,0 +1,58 @@
+{
+  "name": "usb-video-vault",
+  "version": "1.0.4",
+  "description": "USB Video Vault",
+  "author": "Yindo",
+  "main": "dist/main/index.js",
+  "type": "module",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "npm run clean && npm run build:renderer && npm run build:main",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "build:main": "tsc -p tsconfig.main.json",
+    "postbuild:main": "node scripts/copy-preload.cjs"
+  },
+  "build": {
+    "appId": "com.yindo.usbvideovault",
+    "productName": "USB Video Vault",
+    "asar": true,
+    "directories": { "output": "dist" },
+    "files": [
+      "dist/**",
+      "dist/main/**",
+      "dist/renderer/**",
+      "!**/*.map"
+    ],
+    "win": {
+      "target": [ "nsis", "portable" ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": true,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.0",
+    "typescript": "^5.0.0",
+    "rimraf": "^5.0.0",
+    "tailwindcss": "^3.4.13",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.47",
+    "electron": "^31.7.7",
+    "electron-builder": "^26.0.12",
+    "@types/node": "^22.18.1",
+    "@types/mime-types": "^3.0.1"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "electron-log": "^5.4.3",
+    "tweetnacl": "^1.0.3",
+    "mime-types": "^3.0.1",
+    "node-machine-id": "^1.1.12"
+  }
+}
+
+

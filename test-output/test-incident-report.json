@@ -1,0 +1,10 @@
+{
+    "Version":  "v1.0.4",
+    "Timestamp":  "2025-09-21 02:40:12",
+    "ID":  "INC-20250921-024012",
+    "Type":  "SIMULATION",
+    "RollbackVersion":  "v1.0.3",
+    "Description":  "Test simulation incident de securite",
+    "Status":  "SIMULATED",
+    "Severity":  "HIGH"
+}

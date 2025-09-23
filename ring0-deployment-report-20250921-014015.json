@@ -1,0 +1,113 @@
+{
+    "Results":  [
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815729)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "PC-DEV-01"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815733)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "PC-DEV-02"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815738)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "PC-DEV-03"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815742)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "PC-QA-01"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815745)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "PC-QA-02"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815752)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "PC-TEST-01"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815756)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "PC-TEST-02"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815765)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "LAPTOP-01"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815765)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "LAPTOP-02"
+                    },
+                    {
+                        "Output":  "Simulation",
+                        "Status":  "DRY_RUN",
+                        "Timestamp":  {
+                                          "value":  "\/Date(1758418815794)\/",
+                                          "DisplayHint":  2,
+                                          "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                                      },
+                        "Machine":  "WORKSTATION-01"
+                    }
+                ],
+    "Version":  "v1.0.4",
+    "Timestamp":  {
+                      "value":  "\/Date(1758418815794)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "dimanche 21 septembre 2025 01:40:15"
+                  },
+    "TotalMachines":  10,
+    "SuccessfulDeployments":  10,
+    "Phase":  "Ring0_Deployment"
+}

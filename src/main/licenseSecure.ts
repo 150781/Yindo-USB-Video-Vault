@@ -27,6 +27,8 @@ import {
   getMachineFingerprint, 
   detectUSBSerial 
 } from '../shared/device.js';
+import { LicenseExpirationManager } from './licenseExpirationAlert.js';
+import { getCRLManager } from './crlManager.js';
 
 // Clés publiques Ed25519 du packager - FIGÉES DANS LE BINAIRE (sécurité production)
 // Ces clés sont les SEULES autorisées pour valider les licences
@@ -121,6 +123,18 @@ export async function loadAndValidateLicense(vaultPath: string): Promise<License
       };
     }
     
+    // Vérifier la révocation CRL
+    const crlManager = getCRLManager();
+    if (crlManager) {
+      const crlCheck = await crlManager.isLicenseRevoked(licenseFile.data.licenseId, licenseFile.data.kid);
+      if (crlCheck.revoked) {
+        return { 
+          isValid: false, 
+          reason: `Cette licence a été révoquée (raison: ${crlCheck.reason}). Contactez le support.` 
+        };
+      }
+    }
+    
     // Vérifier l'expiration
     const now = new Date();
     const expiry = new Date(licenseFile.data.exp);
@@ -157,8 +171,9 @@ export async function loadAndValidateLicense(vaultPath: string): Promise<License
     persistentData.maxSeenTime = Math.max(persistentData.maxSeenTime, Date.now());
     await savePersistentData();
     
-    // Vérifier alerte renouvellement (30 jours)
-    checkLicenseExpiryAlert(licenseFile.data);
+    // Vérifier alerte renouvellement avec nouveau système
+    const expirationManager = LicenseExpirationManager.getInstance();
+    await expirationManager.checkAndShowExpirationAlert(licenseFile.data);
     
     console.log('[LICENSE] ✅ Licence validée avec succès');
     console.log('[LICENSE] ID:', licenseFile.data.licenseId);
@@ -301,7 +316,7 @@ async function verifyLicenseSignature(licenseFile: LicenseFile): Promise<boolean
  */
 function checkLicenseExpiryAlert(licenseData: LicenseData): void {
   const now = Date.now();
-  const expiry = licenseData.expiresAt;
+  const expiry = new Date(licenseData.exp).getTime();
   const daysUntilExpiry = Math.floor((expiry - now) / (24 * 60 * 60 * 1000));
   
   if (daysUntilExpiry <= 30 && daysUntilExpiry > 0) {

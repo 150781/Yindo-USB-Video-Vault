@@ -1,0 +1,23 @@
+{
+    "Timestamp":  {
+                      "value":  "\/Date(1758420192134)\/",
+                      "DisplayHint":  2,
+                      "DateTime":  "dimanche 21 septembre 2025 02:03:12"
+                  },
+    "TotalFiles":  2,
+    "SuccessCount":  0,
+    "OutputDir":  "deliveries\\batch-test-20250921-0203",
+    "Results":  [
+                    {
+                        "Status":  "ERROR",
+                        "Error":  "ÔØî Usage: node scripts/make-license.mjs \u003cmachineFingerprint\u003e [usbSerial] [options]",
+                        "Source":  "CLIENT-001.json"
+                    },
+                    {
+                        "Status":  "ERROR",
+                        "Error":  "ÔØî Usage: node scripts/make-license.mjs \u003cmachineFingerprint\u003e [usbSerial] [options]",
+                        "Source":  "CLIENT-002.json"
+                    }
+                ],
+    "FingerprintDir":  "fingerprints-test"
+}

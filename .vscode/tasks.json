@@ -42,6 +42,12 @@
 			"type": "shell",
 			"command": ".\\fix-quick.cmd",
 			"group": "build"
+		},
+		{
+			"label": "clean-all",
+			"type": "shell",
+			"command": "if (Test-Path 'dist') { Remove-Item -Path 'dist' -Recurse -Force -ErrorAction SilentlyContinue }; npm run clean; npm install",
+			"group": "build"
 		}
 	]
 }
