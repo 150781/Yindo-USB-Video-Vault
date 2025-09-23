@@ -81,7 +81,7 @@ jobs:
         run: |
           # Guard: skip si secrets absents
           if ([string]::IsNullOrEmpty($env:WINDOWS_CERT_BASE64) -or [string]::IsNullOrEmpty($env:WINDOWS_CERT_PASSWORD)) {
-            Write-Host "⚠️ Skipping Windows signing: secrets not provided."
+            Write-Host "Skipping signing: secrets not provided."
             if (Test-Path dist) {
               $hashLines = (Get-ChildItem "dist" -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
                 $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash
@@ -151,12 +151,10 @@ jobs:
         run: |
           # Guard
           if [[ -z "$MACOS_CERT_BASE64" || -z "$MACOS_CERT_PASSWORD" || -z "$MACOS_DEVELOPER_ID" ]]; then
-            echo "⚠️ Skipping macOS signing: MACOS_* secrets not provided."
+            echo "Skipping macOS signing: secrets not provided."
             APP_PATH="dist/mac/USB Video Vault.app"
-            if [[ -d "$APP_PATH" ]]; then
-              hdiutil create -volname "USB Video Vault" -srcfolder "$APP_PATH" -ov -format UDZO "dist/USB-Video-Vault.dmg"
-              shasum -a 256 "dist/USB-Video-Vault.dmg" > macos-sha256.txt
-            fi
+            [[ -d "$APP_PATH" ]] && hdiutil create -volname "USB Video Vault" -srcfolder "$APP_PATH" -ov -format UDZO "dist/USB-Video-Vault.dmg"
+            [[ -f "dist/USB-Video-Vault.dmg" ]] && shasum -a 256 "dist/USB-Video-Vault.dmg" > macos-sha256.txt
             exit 0
           fi
 
@@ -185,7 +183,7 @@ jobs:
               --wait
             xcrun stapler staple "dist/USB-Video-Vault.dmg"
           else
-            echo "⚠️ Notarization skipped: APPLE_* secrets not set."
+            echo "Notarization skipped: APPLE_* secrets not set."
           fi
 
           # SHA256
@@ -224,7 +222,7 @@ jobs:
         run: |
           # Guard
           if [[ -z "$GPG_PRIVATE_KEY" || -z "$GPG_KEY_ID" ]]; then
-            echo "⚠️ Skipping Linux signing: GPG secrets not provided."
+            echo "Skipping Linux signing: GPG secrets not provided."
             shasum -a 256 dist/*.AppImage > linux-sha256.txt || true
             exit 0
           fi
