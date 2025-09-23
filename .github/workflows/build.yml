@@ -99,6 +99,9 @@ jobs:
     - name: 📦 Install Dependencies
       run: npm ci
       
+    - name: 🧹 Sanitize package.json (BOM protection)
+      run: node tools/sanitize-package-json.cjs
+      
     - name: 🔧 Build Renderer
       run: npm run build:renderer
       
