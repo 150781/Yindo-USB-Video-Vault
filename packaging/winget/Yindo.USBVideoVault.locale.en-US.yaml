@@ -31,7 +31,7 @@ Tags:
 ReleaseNotes: |-
   - First production release with professional Windows installer
   - New Yindo branding and icon integration
-  - Resolved critical "JavaScript error occurred in main process" 
+  - Resolved critical "JavaScript error occurred in main process"
   - Code signing with Windows certificate for SmartScreen compatibility
   - Both NSIS installer and portable versions available
   - Comprehensive build pipeline with multi-platform support

@@ -33,13 +33,13 @@ if ($packageJson.dependencies) {
     foreach ($dep in $packageJson.dependencies.PSObject.Properties) {
         $depName = $dep.Name
         $depVersion = $dep.Value
-        
+
         try {
             # Lire package.json de la dépendance
             $depPackagePath = ".\node_modules\$depName\package.json"
             if (Test-Path $depPackagePath) {
                 $depPackage = Get-Content $depPackagePath | ConvertFrom-Json
-                
+
                 $prodDeps += @{
                     name = $depName
                     version = $depVersion
@@ -78,12 +78,12 @@ if ($packageJson.devDependencies) {
     foreach ($dep in $packageJson.devDependencies.PSObject.Properties) {
         $depName = $dep.Name
         $depVersion = $dep.Value
-        
+
         try {
             $depPackagePath = ".\node_modules\$depName\package.json"
             if (Test-Path $depPackagePath) {
                 $depPackage = Get-Content $depPackagePath | ConvertFrom-Json
-                
+
                 $devDeps += @{
                     name = $depName
                     version = $depVersion
@@ -145,7 +145,7 @@ switch ($Format) {
             }
             components = @()
         }
-        
+
         # Ajouter les composants
         foreach ($dep in ($prodDeps + $devDeps)) {
             $component = @{
@@ -158,7 +158,7 @@ switch ($Format) {
                 licenses = @()
                 externalReferences = @()
             }
-            
+
             if ($dep.license) {
                 $component.licenses += @{
                     license = @{
@@ -166,28 +166,28 @@ switch ($Format) {
                     }
                 }
             }
-            
+
             if ($dep.homepage) {
                 $component.externalReferences += @{
                     type = "website"
                     url = $dep.homepage
                 }
             }
-            
+
             if ($dep.repository) {
                 $component.externalReferences += @{
                     type = "vcs"
                     url = $dep.repository
                 }
             }
-            
+
             $sbom.components += $component
         }
-        
+
         $sbomJson = $sbom | ConvertTo-Json -Depth 10
         $sbomJson | Out-File -FilePath $Output -Encoding UTF8
     }
-    
+
     "spdx" {
         $spdxContent = @"
 SPDXVersion: SPDX-2.3
@@ -208,7 +208,7 @@ PackageLicenseDeclared: $($projectInfo.license)
 PackageCopyrightText: NOASSERTION
 
 "@
-        
+
         foreach ($dep in $prodDeps) {
             $spdxContent += @"
 PackageName: $($dep.name)
@@ -222,10 +222,10 @@ PackageCopyrightText: NOASSERTION
 
 "@
         }
-        
+
         $spdxContent | Out-File -FilePath $Output -Encoding UTF8
     }
-    
+
     "xml" {
         # Format XML simple (non-standard mais lisible)
         $xmlContent = @"
@@ -240,7 +240,7 @@ PackageCopyrightText: NOASSERTION
   </project>
   <dependencies>
 "@
-        
+
         foreach ($dep in ($prodDeps + $devDeps)) {
             $xmlContent += @"
     <dependency scope="$($dep.scope)">
@@ -251,12 +251,12 @@ PackageCopyrightText: NOASSERTION
     </dependency>
 "@
         }
-        
+
         $xmlContent += @"
   </dependencies>
 </sbom>
 "@
-        
+
         $xmlContent | Out-File -FilePath $Output -Encoding UTF8
     }
 }

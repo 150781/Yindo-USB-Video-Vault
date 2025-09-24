@@ -4,10 +4,10 @@
 param(
     [Parameter(Mandatory=$false)]
     [string]$Version,
-    
+
     [ValidateSet("patch","minor","major","prerelease")]
     [string]$Type = "patch",
-    
+
     [switch]$PreRelease,
     [switch]$DryRun
 )
@@ -33,14 +33,14 @@ if (-not $releaseConfig) {
 # Fonctions utilitaires
 function Invoke-Step {
     param($Name, $ScriptBlock)
-    
+
     Write-Host "📋 $Name..." -ForegroundColor Yellow
-    
+
     if ($DryRun) {
         Write-Host "   [DRY RUN] $Name" -ForegroundColor Gray
         return
     }
-    
+
     try {
         & $ScriptBlock
         Write-Host "   ✅ $Name terminé" -ForegroundColor Green
@@ -56,13 +56,13 @@ function Test-Prerequisites {
     if ($gitStatus) {
         throw "Repository a des changements non committés. Committez ou stashez avant la release."
     }
-    
+
     # Vérifier branche actuelle
     $currentBranch = git branch --show-current
     if ($currentBranch -ne "main" -and $currentBranch -ne "develop") {
         throw "Release doit être effectuée depuis la branche main ou develop. Branche actuelle: $currentBranch"
     }
-    
+
     # Vérifier outils requis
     $tools = @("npm", "git", "node")
     foreach ($tool in $tools) {
@@ -72,41 +72,41 @@ function Test-Prerequisites {
             throw "$tool n'est pas installé ou accessible"
         }
     }
-    
+
     Write-Host "✅ Prérequis validés" -ForegroundColor Green
 }
 
 function Get-NextVersion {
     $currentVersion = (Get-Content ".\package.json" | ConvertFrom-Json).version
     Write-Host "Version actuelle: $currentVersion" -ForegroundColor Gray
-    
+
     if ($Version) {
         return $Version
     }
-    
+
     # Calculer la prochaine version automatiquement
     $versionParts = $currentVersion.Split('.')
     $major = [int]$versionParts[0]
     $minor = [int]$versionParts[1]
     $patch = [int]$versionParts[2]
-    
+
     switch ($Type) {
-        "major" { 
-            $major++; $minor = 0; $patch = 0 
+        "major" {
+            $major++; $minor = 0; $patch = 0
         }
-        "minor" { 
-            $minor++; $patch = 0 
+        "minor" {
+            $minor++; $patch = 0
         }
-        "patch" { 
-            $patch++ 
+        "patch" {
+            $patch++
         }
     }
-    
+
     $nextVersion = "$major.$minor.$patch"
     if ($PreRelease) {
         $nextVersion += "-beta.1"
     }
-    
+
     return $nextVersion
 }
 
@@ -130,7 +130,7 @@ if (-not $DryRun) {
 # Étape 3: Audit de sécurité
 Invoke-Step "Audit de sécurité" {
     .\tools\security\security-audit.ps1 -ExportReport ".\audit-pre-release-$targetVersion.json"
-    
+
     # Vérifier les résultats critiques
     $auditReport = Get-Content ".\audit-pre-release-$targetVersion.json" | ConvertFrom-Json
     if ($auditReport.summary.criticalIssues -gt 0) {
@@ -141,12 +141,12 @@ Invoke-Step "Audit de sécurité" {
 # Étape 4: Tests complets
 Invoke-Step "Exécution des tests" {
     npm test
-    
+
     # Tests E2E si disponibles
     if (Test-Path ".\test\e2e") {
         npm run test:e2e
     }
-    
+
     # Tests de support
     .\tools\support\troubleshoot.ps1 -Detailed
 }
@@ -173,12 +173,12 @@ Invoke-Step "Génération SBOM" {
 
 Invoke-Step "Génération des checksums" {
     $artifacts = Get-ChildItem ".\dist" -Name "*.exe" | Where-Object { $_ -like "*Setup*" -or $_ -like "*portable*" }
-    
+
     foreach ($artifact in $artifacts) {
         $artifactPath = ".\dist\$artifact"
         $sha256 = (Get-FileHash $artifactPath -Algorithm SHA256).Hash
         $sha512 = (Get-FileHash $artifactPath -Algorithm SHA512).Hash
-        
+
         "$sha256  $artifact" | Out-File ".\dist\SHA256SUMS" -Append -Encoding UTF8
         "$sha512  $artifact" | Out-File ".\dist\SHA512SUMS" -Append -Encoding UTF8
     }
@@ -191,7 +191,7 @@ Invoke-Step "Bump version" {
         $packageJson = Get-Content ".\package.json" | ConvertFrom-Json
         $packageJson.version = $targetVersion
         $packageJson | ConvertTo-Json -Depth 10 | Set-Content ".\package.json"
-        
+
         git add ".\package.json"
         git commit -m "chore: bump version to $targetVersion"
     } else {
@@ -217,18 +217,18 @@ Invoke-Step "Création du tag Git" {
     $tagName = "v$targetVersion"
     $buildHash = git rev-parse --short HEAD
     $buildDate = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
-    
+
     $tagMessage = @"
 Release $targetVersion
 
 Version: $targetVersion
-Build Hash: $buildHash  
+Build Hash: $buildHash
 Build Date: $buildDate
 Environment: Production
 Release Type: $Type
 Pre-release: $PreRelease
 "@
-    
+
     git tag -a $tagName -m $tagMessage
     git push origin main --tags
 }
@@ -239,27 +239,27 @@ if ($releaseConfig.distribution.github) {
         # Utiliser GitHub CLI si disponible
         try {
             gh --version | Out-Null
-            
+
             $releaseNotes = ""
             if (Test-Path ".\CHANGELOG-$targetVersion.md") {
                 $releaseNotes = Get-Content ".\CHANGELOG-$targetVersion.md" -Raw
             }
-            
+
             $ghCommand = "gh release create v$targetVersion"
             if ($PreRelease) {
                 $ghCommand += " --prerelease"
             }
             $ghCommand += " --title `"USB Video Vault v$targetVersion`""
             $ghCommand += " --notes `"$releaseNotes`""
-            
+
             # Ajouter les artifacts
             $artifacts = Get-ChildItem ".\dist" -Name "*.exe", "*.zip", "SHA*SUMS", "sbom-*.json"
             foreach ($artifact in $artifacts) {
                 $ghCommand += " `".\dist\$artifact`""
             }
-            
+
             Invoke-Expression $ghCommand
-            
+
         } catch {
             Write-Warning "GitHub CLI non disponible. Créez la release manuellement sur GitHub."
         }
@@ -302,7 +302,7 @@ if ($releaseConfig.distribution.github) {
 
 Write-Host "`n📋 Actions post-release:" -ForegroundColor Yellow
 Write-Host "• Surveiller les métriques de performance (48h)" -ForegroundColor White
-Write-Host "• Collecter les feedbacks utilisateurs" -ForegroundColor White  
+Write-Host "• Collecter les feedbacks utilisateurs" -ForegroundColor White
 Write-Host "• Mettre à jour la documentation si nécessaire" -ForegroundColor White
 Write-Host "• Planifier la prochaine release" -ForegroundColor White
 

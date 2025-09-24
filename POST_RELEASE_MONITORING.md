@@ -23,8 +23,8 @@
 # Script de monitoring rapide
 $releaseUrl = "https://api.github.com/repos/150781/Yindo-USB-Video-Vault/releases/tags/v0.1.4"
 $response = Invoke-RestMethod $releaseUrl
-$response.assets | ForEach-Object { 
-    Write-Host "$($_.name): $($_.download_count) téléchargements" 
+$response.assets | ForEach-Object {
+    Write-Host "$($_.name): $($_.download_count) téléchargements"
 }
 ```
 

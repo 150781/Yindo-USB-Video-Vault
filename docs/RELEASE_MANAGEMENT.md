@@ -47,7 +47,7 @@ npm run electron:build
 # Version patch (1.0.0 -> 1.0.1)
 npm version patch
 
-# Version minor (1.0.1 -> 1.1.0)  
+# Version minor (1.0.1 -> 1.1.0)
 npm version minor
 
 # Version major (1.1.0 -> 2.0.0)
@@ -65,7 +65,7 @@ git push origin main --tags
 
 # La GitHub Action se charge de :
 # - Build multi-plateforme
-# - Tests automatisés  
+# - Tests automatisés
 # - Génération des artifacts
 # - Publication sur GitHub Releases
 # - Notification des canaux
@@ -123,10 +123,10 @@ main                    # Production stable
 # Création de tag avec métadonnées
 function New-ReleaseTag {
     param($Version)
-    
+
     $buildHash = git rev-parse --short HEAD
     $buildDate = Get-Date -Format "yyyy-MM-dd"
-    
+
     git tag -a "v$Version" -m @"
 Release v$Version
 
@@ -154,7 +154,7 @@ New-ReleaseTag "1.2.3"
 - Nouvelle interface de gestion des playlists
 - Support du drag & drop multi-fichiers
 
-### Changed  
+### Changed
 - Amélioration des performances de lecture
 - Interface utilisateur modernisée
 
@@ -195,7 +195,7 @@ $timestamp = "http://timestamp.digicert.com"
 Get-FileHash "dist\USB Video Vault Setup 1.2.3.exe" -Algorithm SHA256 > SHA256SUMS
 Get-FileHash "dist\USB Video Vault Setup 1.2.3.exe" -Algorithm SHA512 > SHA512SUMS
 
-# Signature GPG des checksums  
+# Signature GPG des checksums
 gpg --detach-sign --armor SHA256SUMS
 ```
 
@@ -203,7 +203,7 @@ gpg --detach-sign --armor SHA256SUMS
 
 ### KPIs de release
 - **Time to Market** : Temps entre merge et release
-- **Bug Escape Rate** : Bugs découverts post-release  
+- **Bug Escape Rate** : Bugs découverts post-release
 - **Rollback Rate** : Pourcentage de releases nécessitant un rollback
 - **Adoption Rate** : Vitesse d'adoption des nouvelles versions
 
@@ -230,7 +230,7 @@ gpg --detach-sign --armor SHA256SUMS
 
 ### Pre-release
 - [ ] Audit de sécurité complet
-- [ ] Tests automatisés passent  
+- [ ] Tests automatisés passent
 - [ ] Tests manuels validés
 - [ ] Documentation mise à jour
 - [ ] Changelog rédigé
@@ -263,7 +263,7 @@ gpg --detach-sign --armor SHA256SUMS
 # Pre-release / Beta
 .\tools\release\pre-release.ps1 -Version "1.3.0-beta.1"
 
-# Hotfix urgent  
+# Hotfix urgent
 .\tools\release\hotfix.ps1 -Version "1.2.4" -Issue "CVE-2024-XXXX"
 
 # Rollback

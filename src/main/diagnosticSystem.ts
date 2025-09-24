@@ -8,24 +8,24 @@ import * as os from 'os';
 
 export class DiagnosticSystem {
   private static logDir = path.join(app.getPath('userData'), 'logs');
-  
+
   static async initializeLogging() {
     // Créer le dossier de logs s'il n'existe pas
     if (!fs.existsSync(this.logDir)) {
       fs.mkdirSync(this.logDir, { recursive: true });
     }
-    
+
     // Configurer la rotation des logs
     this.setupLogRotation();
   }
-  
+
   static openLogsFolder() {
     shell.openPath(this.logDir);
   }
-  
+
   static getSystemInfo() {
     const packageJson = require('../../package.json');
-    
+
     return {
       application: {
         name: packageJson.name,
@@ -51,11 +51,11 @@ export class DiagnosticSystem {
       }
     };
   }
-  
+
   static async copySystemInfoToClipboard() {
     const { clipboard } = require('electron');
     const info = this.getSystemInfo();
-    
+
     const text = [
       '=== USB Video Vault - System Information ===',
       `Application: ${info.application.name} v${info.application.version}`,
@@ -75,9 +75,9 @@ export class DiagnosticSystem {
       '',
       `Logs Directory: ${this.logDir}`
     ].join('\n');
-    
+
     clipboard.writeText(text);
-    
+
     dialog.showMessageBox({
       type: 'info',
       title: 'Informations système copiées',
@@ -85,22 +85,22 @@ export class DiagnosticSystem {
       detail: 'Vous pouvez maintenant les coller dans un ticket de support.'
     });
   }
-  
+
   static startSafeMode() {
     // Redémarrer l'application en mode sans échec
     app.relaunch({ args: [...process.argv.slice(1), '--safe-mode'] });
     app.exit(0);
   }
-  
+
   static isSafeMode(): boolean {
     return process.argv.includes('--safe-mode');
   }
-  
+
   private static setupLogRotation() {
     // Rotation simple des logs - garder les 7 derniers jours
     const maxAge = 7 * 24 * 60 * 60 * 1000; // 7 jours en ms
     const now = Date.now();
-    
+
     try {
       const files = fs.readdirSync(this.logDir);
       files.forEach(file => {
@@ -114,18 +114,18 @@ export class DiagnosticSystem {
       console.error('Erreur lors de la rotation des logs:', error);
     }
   }
-  
+
   static logError(error: Error, context?: string) {
     const timestamp = new Date().toISOString();
     const logFile = path.join(this.logDir, `error-${new Date().toISOString().split('T')[0]}.log`);
-    
+
     const logEntry = [
       `[${timestamp}] ERROR${context ? ` (${context})` : ''}`,
       `Message: ${error.message}`,
       `Stack: ${error.stack}`,
       '---'
     ].join('\n');
-    
+
     fs.appendFileSync(logFile, logEntry + '\n');
   }
 }
@@ -155,7 +155,7 @@ export const diagnosticMenuItems = [
             buttons: ['Annuler', 'Redémarrer'],
             defaultId: 0
           });
-          
+
           if (response === 1) {
             DiagnosticSystem.startSafeMode();
           }

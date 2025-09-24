@@ -14,7 +14,7 @@
     "strategy": "semver",
     "prerelease": {
       "alpha": "alpha",
-      "beta": "beta", 
+      "beta": "beta",
       "rc": "rc"
     },
     "buildMetadata": true
@@ -81,7 +81,14 @@
   "changelog": {
     "enabled": true,
     "format": "keepachangelog",
-    "sections": ["Added", "Changed", "Deprecated", "Removed", "Fixed", "Security"],
+    "sections": [
+      "Added",
+      "Changed",
+      "Deprecated",
+      "Removed",
+      "Fixed",
+      "Security"
+    ],
     "includeCommits": true,
     "generateAutomatically": true
   },
@@ -110,7 +117,10 @@
       "monitoringWindow": 30
     },
     "approvalRequired": true,
-    "notificationChannels": ["slack", "email"]
+    "notificationChannels": [
+      "slack",
+      "email"
+    ]
   },
   "environments": {
     "development": {

@@ -19,7 +19,7 @@ $auditResults = @{
 # Fonction d'audit
 function Add-AuditResult {
     param($Type, $Check, $Status, $Message, $Details = "")
-    
+
     $result = @{
         check = $Check
         status = $Status
@@ -27,26 +27,26 @@ function Add-AuditResult {
         details = $Details
         timestamp = Get-Date
     }
-    
+
     switch ($Status) {
-        "CRITICAL" { 
+        "CRITICAL" {
             $auditResults.criticalIssues += $result
             Write-Host "❌ CRITIQUE: $Check - $Message" -ForegroundColor Red
         }
-        "WARNING" { 
+        "WARNING" {
             $auditResults.warnings += $result
             Write-Host "⚠️  ATTENTION: $Check - $Message" -ForegroundColor Yellow
         }
-        "RECOMMENDATION" { 
+        "RECOMMENDATION" {
             $auditResults.recommendations += $result
             Write-Host "💡 RECOMMANDATION: $Check - $Message" -ForegroundColor Blue
         }
-        "PASS" { 
+        "PASS" {
             $auditResults.passed += $result
             Write-Host "✅ OK: $Check" -ForegroundColor Green
         }
     }
-    
+
     if ($Detailed -and $Details) {
         Write-Host "   $Details" -ForegroundColor Gray
     }
@@ -56,12 +56,12 @@ function Add-AuditResult {
 Write-Host "1. Audit des vulnérabilités npm:" -ForegroundColor Yellow
 try {
     $npmAuditOutput = npm audit --json 2>$null | ConvertFrom-Json
-    
+
     if ($npmAuditOutput.vulnerabilities) {
         $criticalVulns = ($npmAuditOutput.vulnerabilities.PSObject.Properties | Where-Object { $_.Value.severity -eq "critical" }).Count
         $highVulns = ($npmAuditOutput.vulnerabilities.PSObject.Properties | Where-Object { $_.Value.severity -eq "high" }).Count
         $moderateVulns = ($npmAuditOutput.vulnerabilities.PSObject.Properties | Where-Object { $_.Value.severity -eq "moderate" }).Count
-        
+
         if ($criticalVulns -gt 0) {
             Add-AuditResult "SECURITY" "npm-vulnerabilities" "CRITICAL" "$criticalVulns vulnérabilités critiques détectées" "Exécutez 'npm audit fix' immédiatement"
         } elseif ($highVulns -gt 0) {
@@ -94,7 +94,7 @@ foreach ($pattern in $sensitiveFiles) {
         try {
             $acl = Get-Acl $file.FullName
             $everyone = $acl.Access | Where-Object { $_.IdentityReference -eq "Everyone" -and $_.FileSystemRights -match "FullControl|Write" }
-            
+
             if ($everyone) {
                 Add-AuditResult "SECURITY" "file-permissions" "CRITICAL" "Permissions trop larges sur $($file.Name)" "Everyone a des droits d'écriture"
             } else {
@@ -122,14 +122,14 @@ $codeFiles = Get-ChildItem -Path ".\src" -Recurse -Include "*.ts","*.js" -ErrorA
 
 foreach ($check in $secretChecks) {
     $foundSecrets = @()
-    
+
     foreach ($file in $codeFiles) {
         $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
         if ($content -and $content -match $check.Pattern) {
             $foundSecrets += $file.FullName
         }
     }
-    
+
     if ($foundSecrets.Count -gt 0) {
         Add-AuditResult "SECURITY" "secrets-in-code" "CRITICAL" "$($check.Name) détecté(s) dans le code" "Fichiers: $($foundSecrets -join ', ')"
     } else {
@@ -178,7 +178,7 @@ $externalUrls = @()
 foreach ($file in $allFiles) {
     $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
     if ($content) {
-        $urlMatches = [regex]::Matches($content, "https?://[^\s]+")  
+        $urlMatches = [regex]::Matches($content, "https?://[^\s]+")
         foreach ($match in $urlMatches) {
             if ($match.Value -notmatch "localhost|127\.0\.0\.1|example\.com") {
                 $externalUrls += @{
@@ -207,18 +207,18 @@ if (Test-Path ".\dist") {
     } else {
         Add-AuditResult "SECURITY" "production-build" "PASS" "Aucune source map dans le build de production"
     }
-    
+
     # Vérifier la minification
     $jsFiles = Get-ChildItem -Path ".\dist" -Recurse -Include "*.js" -ErrorAction SilentlyContinue
     $unminifiedFiles = @()
-    
+
     foreach ($jsFile in $jsFiles | Select-Object -First 3) {  # Échantillon
         $content = Get-Content $jsFile.FullName -Raw -ErrorAction SilentlyContinue
         if ($content -and $content.Length -gt 1000 -and ($content -match "\n\s+") -and ($content -match "/\*.*\*/")) {
             $unminifiedFiles += $jsFile.Name
         }
     }
-    
+
     if ($unminifiedFiles.Count -gt 0) {
         Add-AuditResult "SECURITY" "code-minification" "RECOMMENDATION" "Fichiers JS potentiellement non minifiés" "La minification réduit la surface d'attaque"
     } else {
@@ -255,7 +255,7 @@ if ($ExportReport) {
         }
         results = $auditResults
     }
-    
+
     $reportJson = $report | ConvertTo-Json -Depth 10
     $reportJson | Out-File -FilePath $ExportReport -Encoding UTF8
     Write-Host "`n📄 Rapport exporté : $ExportReport" -ForegroundColor Cyan

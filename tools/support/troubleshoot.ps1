@@ -13,7 +13,7 @@ Write-Host ""
 # Fonction pour vérifier l'état d'un service/processus
 function Test-ProcessHealth {
     param($ProcessName)
-    
+
     $processes = Get-Process -Name $ProcessName -ErrorAction SilentlyContinue
     if ($processes) {
         Write-Host "✅ $ProcessName : ${processes.Count} processus actif(s)" -ForegroundColor Green
@@ -33,7 +33,7 @@ function Test-ProcessHealth {
 # Fonction pour vérifier les permissions de dossier
 function Test-FolderPermissions {
     param($Path, $Name)
-    
+
     if (Test-Path $Path) {
         try {
             $testFile = Join-Path $Path "test-permissions-$(Get-Random).tmp"
@@ -118,7 +118,7 @@ if ($CollectLogs) {
         if ($logFiles) {
             Write-Host "✅ Logs trouvés : $($logFiles.Count) fichiers" -ForegroundColor Green
             Write-Host "   Dernier log : $($logFiles[0].Name) ($(Get-Date $logFiles[0].LastWriteTime -Format 'dd/MM/yyyy HH:mm'))" -ForegroundColor Gray
-            
+
             # Copier les logs récents dans un dossier de diagnostic
             $diagDir = ".\diagnostic-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
             New-Item -ItemType Directory -Path $diagDir -Force | Out-Null
@@ -135,7 +135,7 @@ if ($CollectLogs) {
 # 7. Correction des permissions (si demandé)
 if ($FixPermissions) {
     Write-Host "`n7. Correction des permissions:" -ForegroundColor Yellow
-    
+
     $foldersToFix = @(".\vault", ".\usb-package", ".\dist", ".\logs")
     foreach ($folder in $foldersToFix) {
         if (Test-Path $folder) {
@@ -155,16 +155,16 @@ if ($allFilesOK -and $vaultOK -and $usbOK) {
     Write-Host "✅ Système en bon état - Aucun problème critique détecté" -ForegroundColor Green
 } else {
     Write-Host "⚠️  Problèmes détectés - Recommandations:" -ForegroundColor Yellow
-    
+
     if (-not $allFilesOK) {
         Write-Host "   • Exécutez 'npm run build' pour regénérer les fichiers" -ForegroundColor White
     }
-    
+
     if (-not $vaultOK -or -not $usbOK) {
         Write-Host "   • Vérifiez les permissions des dossiers vault/" -ForegroundColor White
         Write-Host "   • Exécutez ce script avec -FixPermissions" -ForegroundColor White
     }
-    
+
     if (-not $appRunning) {
         Write-Host "   • L'application n'est pas en cours d'exécution" -ForegroundColor White
         Write-Host "   • Lancez 'npm start' pour démarrer en mode développement" -ForegroundColor White

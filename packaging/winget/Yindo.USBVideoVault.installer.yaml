@@ -17,8 +17,10 @@ ReleaseDate: 2025-09-24
 Installers:
 - Architecture: x64
   InstallerUrl: https://github.com/150781/Yindo-USB-Video-Vault/releases/download/v0.1.4/USB%20Video%20Vault%20Setup%200.1.4.exe
-  InstallerSha256: [PLACEHOLDER - Replace with actual SHA256 from release]
-  SignatureSha256: [PLACEHOLDER - Replace with actual signature hash]
-  ProductCode: '{PLACEHOLDER - Extract from NSIS build}'
+  InstallerSha256: 3065BF01E798EBD3C49E934943B3A078F947E15DD6BE08CCA30F882E7F6A52BD
+  InstallerSwitches:
+    Silent: /S
+    SilentWithProgress: /S
+    InstallLocation: /D=<INSTALLPATH>
 ManifestType: installer
 ManifestVersion: 1.6.0
