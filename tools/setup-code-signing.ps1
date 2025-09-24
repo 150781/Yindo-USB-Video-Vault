@@ -23,7 +23,7 @@ try {
     Write-Host "📜 Sujet: $($cert.Subject)" -ForegroundColor Gray
     Write-Host "🏢 Émetteur: $($cert.Issuer)" -ForegroundColor Gray
     Write-Host "📅 Valide du: $($cert.NotBefore) au $($cert.NotAfter)" -ForegroundColor Gray
-    
+
     # Vérifier si c'est un certificat EV
     $isEV = $cert.Subject -match "OU=.*EV.*" -or $cert.Extensions | Where-Object { $_.Oid.FriendlyName -eq "Certificate Policies" }
     if ($isEV) {
@@ -41,7 +41,7 @@ Write-Host "`n🔐 Encodage Base64 pour GitHub Secrets..." -ForegroundColor Yell
 try {
     $certBytes = [IO.File]::ReadAllBytes($CertPath)
     $certBase64 = [Convert]::ToBase64String($certBytes)
-    
+
     $outputFile = "windows-cert-base64.txt"
     $certBase64 | Set-Content -Path $outputFile -Encoding ASCII
     Write-Host "✅ Certificat encodé sauvé: $outputFile" -ForegroundColor Green
@@ -64,12 +64,12 @@ $testFile = ".\dist\USB Video Vault Setup 0.1.4.exe"
 if (Test-Path $testFile) {
     # Chercher signtool
     $signtool = Get-ChildItem "C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe" -ErrorAction SilentlyContinue | Sort-Object FullName -Descending | Select-Object -First 1
-    
+
     if ($signtool) {
         Write-Host "🔧 Signature test avec signtool..." -ForegroundColor Gray
         try {
             & $signtool.FullName sign /fd SHA256 /f $CertPath /p $Password /tr http://timestamp.sectigo.com /td SHA256 /d "USB Video Vault" $testFile
-            
+
             # Vérifier la signature
             & $signtool.FullName verify /pa /v $testFile
             Write-Host "✅ Signature test réussie!" -ForegroundColor Green

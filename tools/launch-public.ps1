@@ -48,22 +48,22 @@ if ($missing.Count -gt 0) {
 # ETAPE 2: Signature (si certificat fourni)
 if (-not $SkipSigning -and $CertPath) {
     Write-Host "`n2. Signature Authenticode..." -ForegroundColor Yellow
-    
+
     if (Test-Path $CertPath) {
         Write-Host "  Certificat trouve: $CertPath" -ForegroundColor Green
-        
+
         if (-not $DryRun) {
             # Signer setup
             $setupFile = ".\dist\USB Video Vault Setup $Version.exe"
             Write-Host "  Signature: $setupFile" -ForegroundColor Blue
-            
+
             # En production: signtool avec timestamp
             # signtool sign /f $CertPath /p $plaintextPassword /t http://timestamp.sectigo.com $setupFile
-            
+
             # Signer portable
             $portableFile = ".\dist\USB Video Vault $Version.exe"
             Write-Host "  Signature: $portableFile" -ForegroundColor Blue
-            
+
             # Verification signatures
             Write-Host "  Verification signatures..." -ForegroundColor Blue
             # $sig = Get-AuthenticodeSignature $setupFile
@@ -100,7 +100,7 @@ $setupFile = ".\release-assets-final\USB Video Vault Setup $Version.exe"
 if (Test-Path $setupFile) {
     $realSha256 = (Get-FileHash $setupFile -Algorithm SHA256).Hash
     Write-Host "  SHA256 reel: $realSha256" -ForegroundColor Blue
-    
+
     # Mise a jour Winget manifest
     $wingetFile = ".\packaging\winget\installer.yaml"
     if (Test-Path $wingetFile) {
@@ -108,7 +108,7 @@ if (Test-Path $setupFile) {
         # En production: remplacer SHA256 dans le manifest
         Write-Host "  OK Winget manifest mis a jour" -ForegroundColor Green
     }
-    
+
     # Mise a jour Chocolatey install script
     $chocoScript = ".\packaging\chocolatey\tools\chocolateyinstall.ps1"
     if (Test-Path $chocoScript) {
@@ -136,14 +136,14 @@ Write-Host "`n6. Publication GitHub Release..." -ForegroundColor Yellow
 
 if (-not $DryRun -and $GitHubToken) {
     Write-Host "  Creation release v$Version..." -ForegroundColor Blue
-    
+
     # Set GitHub token
     $env:GITHUB_TOKEN = $GitHubToken
-    
+
     # Create release
     $releaseCmd = "gh release create v$Version --title `"USB Video Vault v$Version - Public Release`" --notes-file `".\release-assets-final\RELEASE_NOTES.md`" .\release-assets-final\*"
     Write-Host "  Commande: $releaseCmd" -ForegroundColor Gray
-    
+
     # En production: Invoke-Expression $releaseCmd
     Write-Host "  OK GitHub Release publiee" -ForegroundColor Green
 } else {
@@ -154,13 +154,13 @@ if (-not $DryRun -and $GitHubToken) {
 # ETAPE 7: Preparation soumissions distribution
 if (-not $SkipDistribution) {
     Write-Host "`n7. Preparation soumissions..." -ForegroundColor Yellow
-    
+
     # Winget
     Write-Host "  Winget PR preparation:" -ForegroundColor Blue
     Write-Host "    - Fork microsoft/winget-pkgs" -ForegroundColor White
     Write-Host "    - Branch: yindo-usbvideovault-$Version" -ForegroundColor White
     Write-Host "    - Path: manifests/y/Yindo/USBVideoVault/$Version/" -ForegroundColor White
-    
+
     # Chocolatey
     Write-Host "  Chocolatey package:" -ForegroundColor Blue
     if (Test-Path ".\packaging\chocolatey\usbvideovault.nuspec") {

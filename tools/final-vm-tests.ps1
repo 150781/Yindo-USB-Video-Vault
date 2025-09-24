@@ -25,7 +25,7 @@ Write-Host "1. 📥 Téléchargement du setup..." -ForegroundColor Yellow
 try {
     $ProgressPreference = 'SilentlyContinue'  # Masquer barre de progression
     Invoke-WebRequest -Uri $SetupUrl -OutFile $LocalSetup -UseBasicParsing
-    
+
     if (Test-Path $LocalSetup) {
         $setupInfo = Get-Item $LocalSetup
         $setupSize = [math]::Round($setupInfo.Length / 1MB, 2)
@@ -41,7 +41,7 @@ try {
 Write-Host "`n2. 🔐 Vérification signature..." -ForegroundColor Yellow
 try {
     $signature = Get-AuthenticodeSignature $LocalSetup
-    
+
     switch ($signature.Status) {
         "Valid" {
             Write-Host "✅ Signature Authenticode valide" -ForegroundColor Green
@@ -72,16 +72,16 @@ Write-Host "   • Certificat OV/DV → Réputation progressive (quelques jours)
 Write-Host "`n4. 📦 Test installation silencieuse..." -ForegroundColor Yellow
 try {
     $installProcess = Start-Process -FilePath $LocalSetup -ArgumentList "/S" -Wait -PassThru
-    
+
     if ($installProcess.ExitCode -eq 0) {
         Write-Host "✅ Installation silencieuse réussie" -ForegroundColor Green
         $testResults.silentInstall = $true
-        
+
         # Vérifier les fichiers installés
         $installPath = "$env:ProgramFiles\USB Video Vault"
         $mainExe = "$installPath\USB Video Vault.exe"
         $uninstaller = "$installPath\Uninstall USB Video Vault.exe"
-        
+
         if ((Test-Path $mainExe) -and (Test-Path $uninstaller)) {
             Write-Host "✅ Fichiers installés correctement" -ForegroundColor Green
         } else {
@@ -101,17 +101,17 @@ if ($testResults.silentInstall) {
         $mainExe = "$env:ProgramFiles\USB Video Vault\USB Video Vault.exe"
         $appProcess = Start-Process -FilePath $mainExe -PassThru
         Start-Sleep -Seconds 5  # Attendre le démarrage
-        
+
         if ($appProcess -and -not $appProcess.HasExited) {
             Write-Host "✅ Application lancée avec succès" -ForegroundColor Green
             $testResults.launch = $true
-            
+
             # Vérifier la fenêtre
             $windowTitle = (Get-Process -Id $appProcess.Id -ErrorAction SilentlyContinue).MainWindowTitle
             if ($windowTitle) {
                 Write-Host "✅ Fenêtre principale: '$windowTitle'" -ForegroundColor Green
             }
-            
+
             # Fermer l'application proprement
             Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
             Write-Host "🛑 Application fermée pour tests" -ForegroundColor Gray
@@ -130,11 +130,11 @@ if ($testResults.silentInstall) {
         $uninstaller = "$env:ProgramFiles\USB Video Vault\Uninstall USB Video Vault.exe"
         if (Test-Path $uninstaller) {
             $uninstallProcess = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru
-            
+
             if ($uninstallProcess.ExitCode -eq 0) {
                 Write-Host "✅ Désinstallation silencieuse réussie" -ForegroundColor Green
                 $testResults.silentUninstall = $true
-                
+
                 # Vérifier suppression
                 Start-Sleep -Seconds 2
                 if (-not (Test-Path "$env:ProgramFiles\USB Video Vault")) {

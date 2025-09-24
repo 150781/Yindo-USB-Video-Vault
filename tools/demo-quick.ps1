@@ -41,7 +41,7 @@ if ($appPath) {
 # 2. Création vault demo si demandé
 if ($CreateSampleVault) {
     Write-Host "`n2. 📁 Création vault de démonstration..." -ForegroundColor Yellow
-    
+
     if (Test-Path $VaultPath) {
         Write-Host "   ⚠️  Vault existe déjà: $VaultPath" -ForegroundColor Yellow
         Write-Host "   🗑️  Supprimer? (y/N)" -ForegroundColor Yellow
@@ -53,13 +53,13 @@ if ($CreateSampleVault) {
             Write-Host "   ⏭️  Utilisation vault existant" -ForegroundColor Blue
         }
     }
-    
+
     if (-not (Test-Path $VaultPath)) {
         # Créer structure vault basique
         New-Item -ItemType Directory -Path $VaultPath -Force | Out-Null
         New-Item -ItemType Directory -Path "$VaultPath\media" -Force | Out-Null
         New-Item -ItemType Directory -Path "$VaultPath\manifests" -Force | Out-Null
-        
+
         # Vault config basique
         $vaultConfig = @{
             version = "1.0"
@@ -71,16 +71,16 @@ if ($CreateSampleVault) {
             }
             mediaCount = 0
         } | ConvertTo-Json -Depth 3
-        
+
         $vaultConfig | Out-File "$VaultPath\vault.json" -Encoding UTF8
-        
+
         # Index vide
         @{
             media = @()
             playlists = @()
             lastUpdated = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
         } | ConvertTo-Json -Depth 3 | Out-File "$VaultPath\index.json" -Encoding UTF8
-        
+
         Write-Host "✅ Vault demo créé: $VaultPath" -ForegroundColor Green
     }
 }
@@ -88,7 +88,7 @@ if ($CreateSampleVault) {
 # 3. Ajout média de test si disponible
 if ($CreateSampleVault -and (Test-Path ".\src\assets\demo.mp4")) {
     Write-Host "`n3. 🎬 Ajout média de démonstration..." -ForegroundColor Yellow
-    
+
     if (Test-Path ".\tools\packager\pack.js") {
         try {
             & node .\tools\packager\pack.js add-media --vault $VaultPath --file ".\src\assets\demo.mp4" --title "Vidéo de démonstration" --artist "USB Video Vault"
@@ -104,7 +104,7 @@ if ($CreateSampleVault -and (Test-Path ".\src\assets\demo.mp4")) {
 # 4. Lancement application si demandé
 if ($ShowUI) {
     Write-Host "`n4. 🚀 Lancement application..." -ForegroundColor Yellow
-    
+
     try {
         # Lancer l'app en mode démo si vault créé
         if ($CreateSampleVault -and (Test-Path $VaultPath)) {
@@ -114,10 +114,10 @@ if ($ShowUI) {
             Write-Host "   🎯 Lancement normal" -ForegroundColor Blue
             Start-Process $appPath -WindowStyle Normal
         }
-        
+
         # Attendre que l'app se lance
         Start-Sleep -Seconds 3
-        
+
         # Vérifier si l'app est lancée
         $process = Get-Process | Where-Object {$_.ProcessName -like "*USB Video Vault*" -or $_.MainWindowTitle -like "*USB Video Vault*"}
         if ($process) {
@@ -125,7 +125,7 @@ if ($ShowUI) {
         } else {
             Write-Host "⚠️  Application peut-être en cours de lancement..." -ForegroundColor Yellow
         }
-        
+
     } catch {
         Write-Host "❌ Erreur lancement: $($_.Exception.Message)" -ForegroundColor Red
         Write-Host "   💡 Vérifier que l'application n'est pas déjà lancée" -ForegroundColor Yellow
@@ -135,14 +135,14 @@ if ($ShowUI) {
 # 5. Test de lecture si demandé et vault disponible
 if ($TestPlayback -and (Test-Path "$VaultPath\index.json")) {
     Write-Host "`n5. ⏯️ Test de lecture..." -ForegroundColor Yellow
-    
+
     try {
         $index = Get-Content "$VaultPath\index.json" | ConvertFrom-Json
         if ($index.media -and $index.media.Count -gt 0) {
             $firstMedia = $index.media[0]
             Write-Host "   🎬 Média trouvé: $($firstMedia.title)" -ForegroundColor Blue
             Write-Host "   ⏯️  Test de lecture automatique..." -ForegroundColor Blue
-            
+
             # Ici vous pourriez déclencher la lecture via IPC si l'API le permet
             # Pour l'instant, juste afficher les infos
             Write-Host "   📊 Durée: $($firstMedia.duration)s" -ForegroundColor Gray

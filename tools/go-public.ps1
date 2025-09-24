@@ -22,41 +22,41 @@ if ($DryRun) {
 # Fonction utilitaire
 function Test-Prerequisites {
     Write-Host "Verification des prerequis..." -ForegroundColor Yellow
-    
+
     $missing = @()
-    
+
     # Verifier les fichiers build
     $requiredFiles = @(
         ".\dist\USB Video Vault Setup $Version.exe",
         ".\dist\USB Video Vault $Version.exe",
         ".\dist\SHA256SUMS"
     )
-    
+
     foreach ($file in $requiredFiles) {
         if (-not (Test-Path $file)) {
             $missing += "Fichier build: $file"
         }
     }
-    
+
     # Verifier les manifests de distribution
     $manifests = @(
         ".\packaging\winget\Yindo.USBVideoVault.yaml",
         ".\packaging\chocolatey\usbvideovault.nuspec"
     )
-    
+
     foreach ($manifest in $manifests) {
         if (-not (Test-Path $manifest)) {
             $missing += "Manifest: $manifest"
         }
     }
-    
+
     # Verifier certificat si signature requise
     if (-not $SkipSigning -and -not [string]::IsNullOrEmpty($CertPath)) {
         if (-not (Test-Path $CertPath)) {
             $missing += "Certificat: $CertPath"
         }
     }
-    
+
     if ($missing.Count -gt 0) {
         Write-Host "ERREUR Prerequis manquants:" -ForegroundColor Red
         foreach ($item in $missing) {
@@ -64,7 +64,7 @@ function Test-Prerequisites {
         }
         return $false
     }
-    
+
     Write-Host "OK Tous les prerequis valides" -ForegroundColor Green
     return $true
 }
@@ -80,7 +80,7 @@ if (-not $SkipValidation) {
 # Step 1: Signature Authenticode
 if (-not $SkipSigning -and -not [string]::IsNullOrEmpty($CertPath)) {
     Write-Host "`n1. Signature Authenticode..." -ForegroundColor Yellow
-    
+
     if (-not $DryRun) {
         Write-Host "   Execution setup-code-signing.ps1..." -ForegroundColor Blue
         # Note: En production, implementer la signature ici
@@ -123,7 +123,7 @@ if (Get-Command gh -ErrorAction SilentlyContinue) {
         Write-Host "   Creation release avec GitHub CLI..." -ForegroundColor Blue
         $releaseCmd = "gh release create v$Version --title `"USB Video Vault v$Version`" --notes-file `".\release-assets\RELEASE_NOTES.md`" .\release-assets\*"
         Write-Host "   Commande: $releaseCmd" -ForegroundColor Gray
-        
+
         # En production: Invoke-Expression $releaseCmd
         Write-Host "   OK Release GitHub creee" -ForegroundColor Green
     } else {
@@ -161,7 +161,7 @@ if (Test-Path $chocoSpec) {
 # Step 6: Demarrage monitoring
 if (-not $MonitoringOnly) {
     Write-Host "`n6. Demarrage monitoring post-release..." -ForegroundColor Yellow
-    
+
     if (-not $DryRun) {
         Write-Host "   Monitoring 48h en arriere-plan..." -ForegroundColor Blue
         # En production: Start-Process PowerShell -ArgumentList "-File", ".\tools\monitor-release.ps1", "-Version", $Version, "-Hours", "48" -WindowStyle Minimized

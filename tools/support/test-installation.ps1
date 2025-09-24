@@ -18,7 +18,7 @@ function Test-InstallationState {
     $installed = Get-WmiObject -Class Win32_Product | Where-Object { $_.Name -like "*USB Video Vault*" }
     $processRunning = Get-Process "USB Video Vault" -ErrorAction SilentlyContinue
     $installPath = "$env:ProgramFiles\USB Video Vault"
-    
+
     return @{
         WmiProduct = $installed
         ProcessRunning = $processRunning
@@ -84,7 +84,7 @@ $installStart = Get-Date
 try {
     $process = Start-Process -FilePath $SetupPath -ArgumentList "/S" -Wait -PassThru
     $installDuration = (Get-Date) - $installStart
-    
+
     if ($process.ExitCode -eq 0) {
         Write-Host "✅ Installation terminée avec succès" -ForegroundColor Green
         Write-Host "⏱️  Durée: $([math]::Round($installDuration.TotalSeconds, 1))s" -ForegroundColor Gray
@@ -114,14 +114,14 @@ if ($postInstall.FilesPresent) {
     Write-Host "✅ Dossier d'installation présent" -ForegroundColor Green
     $mainExe = "$($postInstall.InstallPath)\USB Video Vault.exe"
     $uninstaller = "$($postInstall.InstallPath)\Uninstall USB Video Vault.exe"
-    
+
     if (Test-Path $mainExe) {
         $exeInfo = Get-Item $mainExe
         Write-Host "✅ Exécutable principal: $([math]::Round($exeInfo.Length/1MB,1))MB" -ForegroundColor Green
     } else {
         Write-Host "❌ Exécutable principal manquant" -ForegroundColor Red
     }
-    
+
     if (Test-Path $uninstaller) {
         Write-Host "✅ Désinstallateur présent" -ForegroundColor Green
     } else {
@@ -134,22 +134,22 @@ if ($postInstall.FilesPresent) {
 # 5. Test de lancement (si demandé)
 if ($FullTest) {
     Write-Host "`n5. 🚀 Test de lancement:" -ForegroundColor Yellow
-    
+
     try {
         $mainExe = "$($postInstall.InstallPath)\USB Video Vault.exe"
         if (Test-Path $mainExe) {
             $appProcess = Start-Process -FilePath $mainExe -PassThru
             Start-Sleep -Seconds 3
-            
+
             if ($appProcess -and -not $appProcess.HasExited) {
                 Write-Host "✅ Application lancée avec succès (PID: $($appProcess.Id))" -ForegroundColor Green
-                
+
                 # Vérifier la fenêtre
                 $windowTitle = (Get-Process -Id $appProcess.Id -ErrorAction SilentlyContinue).MainWindowTitle
                 if ($windowTitle) {
                     Write-Host "✅ Fenêtre principale: '$windowTitle'" -ForegroundColor Green
                 }
-                
+
                 # Arrêter l'application après test
                 Write-Host "🛑 Arrêt de l'application..." -ForegroundColor Gray
                 Stop-Process -Id $appProcess.Id -Force -ErrorAction SilentlyContinue
@@ -165,25 +165,25 @@ if ($FullTest) {
 # 6. Test de désinstallation (si demandé)
 if ($FullTest -and $postInstall.FilesPresent) {
     Write-Host "`n6. 🗑️  Test de désinstallation:" -ForegroundColor Yellow
-    
+
     $uninstaller = "$($postInstall.InstallPath)\Uninstall USB Video Vault.exe"
     if (Test-Path $uninstaller) {
         Write-Host "Commande: `"$uninstaller`" /S" -ForegroundColor Gray
-        
+
         try {
             $uninstallProcess = Start-Process -FilePath $uninstaller -ArgumentList "/S" -Wait -PassThru
             Start-Sleep -Seconds 2
-            
+
             if ($uninstallProcess.ExitCode -eq 0) {
                 Write-Host "✅ Désinstallation terminée" -ForegroundColor Green
-                
+
                 # Vérifier la suppression
                 if (-not (Test-Path $postInstall.InstallPath)) {
                     Write-Host "✅ Dossier d'installation supprimé" -ForegroundColor Green
                 } else {
                     Write-Host "⚠️  Dossier d'installation toujours présent" -ForegroundColor Yellow
                 }
-                
+
                 $finalState = Test-InstallationState
                 if (-not $finalState.WmiProduct) {
                     Write-Host "✅ Produit supprimé du registre" -ForegroundColor Green

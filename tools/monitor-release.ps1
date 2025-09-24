@@ -38,7 +38,7 @@ function Write-Log {
 function Send-Alert {
     param([string]$Title, [string]$Message, [string]$Severity = "INFO")
     Write-Log "🚨 ALERT [$Severity] $Title - $Message" "ALERT"
-    
+
     # Ici vous pourriez intégrer Slack, Teams, email, etc.
     # Exemple webhook Slack:
     # $webhook = "https://hooks.slack.com/services/..."
@@ -67,7 +67,7 @@ try {
     $testPath = "$env:TEMP\usb-vault-setup-test.exe"
     $webClient = New-Object System.Net.WebClient
     $webClient.DownloadFile($downloadUrl, $testPath)
-    
+
     if (Test-Path $testPath) {
         $downloadSize = [math]::Round((Get-Item $testPath).Length / 1MB, 2)
         Write-Log "✅ Téléchargement OK (${downloadSize}MB)"
@@ -82,7 +82,7 @@ try {
 if (-not $SkipSmartScreen) {
     Write-Host "`n3. 🛡️ Monitoring SmartScreen..." -ForegroundColor Yellow
     Write-Log "Début monitoring réputation SmartScreen"
-    
+
     # Simulation d'un check de réputation (à remplacer par API réelle si disponible)
     $smartScreenStatus = @{
         "Reputation" = "Unknown"
@@ -90,7 +90,7 @@ if (-not $SkipSmartScreen) {
         "ReportedThreat" = $false
         "LastChecked" = Get-Date
     }
-    
+
     Write-Log "⚠️  SmartScreen Status: $($smartScreenStatus.Reputation)"
     if ($smartScreenStatus.Reputation -eq "Unknown") {
         Write-Log "ℹ️  Note: Réputation SmartScreen normale pour nouvelle release"
@@ -110,9 +110,9 @@ Write-Log "Surveillance démarrée jusqu'à $($endTime.ToString('yyyy-MM-dd HH:m
 do {
     $currentTime = Get-Date
     $elapsed = [math]::Round(($currentTime - $startTime).TotalHours, 1)
-    
+
     Write-Host "`n⏰ Check $elapsed/$Hours heures..." -ForegroundColor Blue
-    
+
     # Check 1: Disponibilité release
     try {
         $response = Invoke-WebRequest -Uri $releaseUrl -Method HEAD -TimeoutSec 10
@@ -120,12 +120,12 @@ do {
     } catch {
         $errorCount++
         Write-Log "❌ Erreur accès release: $($_.Exception.Message)" "ERROR"
-        
+
         if ($errorCount -ge 3) {
             Send-Alert "Release indisponible" "3+ erreurs consécutives d'accès à la release" "CRITICAL"
         }
     }
-    
+
     # Check 2: Test téléchargement léger
     try {
         $headResponse = Invoke-WebRequest -Uri $downloadUrl -Method HEAD -TimeoutSec 10
@@ -137,7 +137,7 @@ do {
     } catch {
         Write-Log "⚠️  Erreur check téléchargement: $($_.Exception.Message)" "WARN"
     }
-    
+
     # Check 3: Logs d'erreur GitHub (mock)
     # En production, vous pourriez interroger l'API GitHub pour les issues, discussions, etc.
     $mockGitHubIssues = @()
@@ -145,23 +145,23 @@ do {
         Write-Log "⚠️  $($mockGitHubIssues.Count) nouveaux problèmes signalés" "WARN"
         Send-Alert "Problèmes utilisateurs" "$($mockGitHubIssues.Count) nouveaux problèmes signalés" "WARN"
     }
-    
+
     # Statistiques périodiques
     if ($elapsed % 2 -eq 0) { # Toutes les 2 heures
         Write-Host "`n📊 Statistiques ($elapsed h):" -ForegroundColor Cyan
         Write-Host "   • Checks réussis: $downloadCount" -ForegroundColor Green
         Write-Host "   • Erreurs: $errorCount" -ForegroundColor $(if($errorCount -eq 0){"Green"}else{"Red"})
         Write-Host "   • Disponibilité: $([math]::Round((1-$errorCount/($downloadCount+$errorCount))*100,1))%" -ForegroundColor $(if($errorCount -eq 0){"Green"}else{"Yellow"})
-        
+
         Write-Log "Stats: $downloadCount OK, $errorCount erreurs"
     }
-    
+
     # Attendre avant le prochain check
     if ($currentTime -lt $endTime) {
         Write-Host "⏸️  Attente $checkInterval min..." -ForegroundColor Gray
         Start-Sleep -Seconds ($checkInterval * 60)
     }
-    
+
 } while ((Get-Date) -lt $endTime -and ($Continuous -or (Get-Date) -lt $endTime))
 
 # 5. Rapport final

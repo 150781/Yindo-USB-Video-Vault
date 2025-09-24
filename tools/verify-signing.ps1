@@ -33,15 +33,15 @@ Write-Host "1. Verification Authenticode..." -ForegroundColor Yellow
 
 try {
     $signature = Get-AuthenticodeSignature $SetupPath
-    
+
     Write-Host "  Status: $($signature.Status)" -ForegroundColor $(if($signature.Status -eq 'Valid'){'Green'}else{'Red'})
-    
+
     if ($signature.SignerCertificate) {
         Write-Host "  Signer: $($signature.SignerCertificate.Subject)" -ForegroundColor Blue
         Write-Host "  Issuer: $($signature.SignerCertificate.Issuer)" -ForegroundColor Blue
         Write-Host "  Valid from: $($signature.SignerCertificate.NotBefore)" -ForegroundColor Gray
         Write-Host "  Valid until: $($signature.SignerCertificate.NotAfter)" -ForegroundColor Gray
-        
+
         # Check certificate type (EV/OV/DV)
         $certExtensions = $signature.SignerCertificate.Extensions
         $isEV = $certExtensions | Where-Object {$_.Oid.FriendlyName -eq "Certificate Policies"}
@@ -51,14 +51,14 @@ try {
             Write-Host "  Type: Organization/Domain Validation - SmartScreen normal" -ForegroundColor Yellow
         }
     }
-    
+
     if ($signature.TimeStamperCertificate) {
         Write-Host "  Timestamp: $($signature.TimeStamperCertificate.Subject)" -ForegroundColor Blue
         Write-Host "  Timestamp valid until: $($signature.TimeStamperCertificate.NotAfter)" -ForegroundColor Gray
     } else {
         Write-Host "  WARN Pas de timestamp - signature expire avec le certificat" -ForegroundColor Yellow
     }
-    
+
 } catch {
     Write-Host "  ERREUR Verification signature: $($_.Exception.Message)" -ForegroundColor Red
 }
@@ -88,10 +88,10 @@ if (Get-Command signtool -ErrorAction SilentlyContinue) {
 # 3. VERIFICATION PORTABLE (si fourni)
 if ($PortablePath -and (Test-Path $PortablePath)) {
     Write-Host "`n3. Verification portable..." -ForegroundColor Yellow
-    
+
     $portableSignature = Get-AuthenticodeSignature $PortablePath
     Write-Host "  Portable status: $($portableSignature.Status)" -ForegroundColor $(if($portableSignature.Status -eq 'Valid'){'Green'}else{'Red'})
-    
+
     # Verifier coherence signatures
     if ($signature.SignerCertificate -and $portableSignature.SignerCertificate) {
         if ($signature.SignerCertificate.Thumbprint -eq $portableSignature.SignerCertificate.Thumbprint) {
@@ -105,18 +105,18 @@ if ($PortablePath -and (Test-Path $PortablePath)) {
 # 4. SIMULATION TEST SMARTSCREEN
 if ($TestSmartScreen) {
     Write-Host "`n4. Test SmartScreen simulation..." -ForegroundColor Yellow
-    
+
     # Test 1: Verification hash dans base de donnees (simulation)
     $fileHash = (Get-FileHash $SetupPath -Algorithm SHA256).Hash
     Write-Host "  Hash fichier: $fileHash" -ForegroundColor Blue
-    
+
     # Test 2: Verification Publisher reputation (simulation)
     if ($signature.SignerCertificate) {
         $publisherName = ($signature.SignerCertificate.Subject -split ',')[0] -replace 'CN=', ''
         Write-Host "  Publisher: $publisherName" -ForegroundColor Blue
         Write-Host "  Reputation: Nouveau publisher - warnings initiaux normaux" -ForegroundColor Yellow
     }
-    
+
     # Test 3: Simulation download et execution
     Write-Host "  Test simulation: Telechargement depuis GitHub" -ForegroundColor Blue
     Write-Host "  Prediction SmartScreen:" -ForegroundColor Blue

@@ -99,7 +99,7 @@ $releaseNotesContent = @"
 
 ### Securite
 - Binaires signes avec certificat Authenticode (si disponible)
-- Audit de securite : Score 84.2% 
+- Audit de securite : Score 84.2%
 - SBOM (Software Bill of Materials) inclus pour la compliance
 - Checksums SHA256 verifies
 
@@ -133,9 +133,9 @@ Voir fichier SHA256SUMS inclus
 
 ---
 
-**Installation testee sur :** Windows 10/11 (x64)  
-**Prerequis :** Aucun (runtime inclus)  
-**Taille d'installation :** ~200MB  
+**Installation testee sur :** Windows 10/11 (x64)
+**Prerequis :** Aucun (runtime inclus)
+**Taille d'installation :** ~200MB
 "@
 
 $releaseNotesContent | Out-File "$OutputDir\RELEASE_NOTES.md" -Encoding UTF8
@@ -158,10 +158,10 @@ if (Test-Path $OutputDir) {
     Write-Host "Assets ($($assets.Count) fichiers):" -ForegroundColor Yellow
 
     foreach ($asset in $assets) {
-        $size = if ($asset.Length -gt 1MB) { 
-            "$([math]::Round($asset.Length/1MB,1))MB" 
-        } else { 
-            "$([math]::Round($asset.Length/1KB,1))KB" 
+        $size = if ($asset.Length -gt 1MB) {
+            "$([math]::Round($asset.Length/1MB,1))MB"
+        } else {
+            "$([math]::Round($asset.Length/1KB,1))KB"
         }
         Write-Host "  • $($asset.Name) ($size)" -ForegroundColor White
     }
