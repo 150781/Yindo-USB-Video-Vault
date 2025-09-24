@@ -109,30 +109,31 @@ foreach ($pattern in $sensitiveFiles) {
 # 3. Vérification des secrets dans le code
 Write-Host "`n3. Recherche de secrets dans le code:" -ForegroundColor Yellow
 
-$secretPatterns = @(
-    @{Name="API Keys"; Pattern='api[_-]?key\s*[:=]\s*[''"`]([a-zA-Z0-9]{20,})[''"`]'},
-    @{Name="Passwords"; Pattern='password\s*[:=]\s*[''"`]([^''"`\s]{6,})[''"`]'},
-    @{Name="Private Keys"; Pattern='-----BEGIN (RSA |)PRIVATE KEY-----'},
-    @{Name="AWS Keys"; Pattern='AKIA[0-9A-Z]{16}'},
-    @{Name="Generic Secrets"; Pattern='secret\s*[:=]\s*[''"`]([a-zA-Z0-9]{10,})[''"`]'}
+# Patterns de recherche de secrets (expressions régulières simplifiées)
+$secretChecks = @(
+    @{Name="API Keys"; Pattern="api.*key.*=.*[a-zA-Z0-9]{20,}"},
+    @{Name="Passwords"; Pattern="password.*=.*[a-zA-Z0-9]{6,}"},
+    @{Name="Private Keys"; Pattern="-----BEGIN.*PRIVATE KEY-----"},
+    @{Name="AWS Keys"; Pattern="AKIA[0-9A-Z]{16}"},
+    @{Name="Generic Secrets"; Pattern="secret.*=.*[a-zA-Z0-9]{10,}"}
 )
 
 $codeFiles = Get-ChildItem -Path ".\src" -Recurse -Include "*.ts","*.js" -ErrorAction SilentlyContinue
 
-foreach ($pattern in $secretPatterns) {
+foreach ($check in $secretChecks) {
     $foundSecrets = @()
     
     foreach ($file in $codeFiles) {
         $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
-        if ($content -and $content -match $pattern.Pattern) {
+        if ($content -and $content -match $check.Pattern) {
             $foundSecrets += $file.FullName
         }
     }
     
     if ($foundSecrets.Count -gt 0) {
-        Add-AuditResult "SECURITY" "secrets-in-code" "CRITICAL" "$($pattern.Name) détecté(s) dans le code" "Fichiers: $($foundSecrets -join ', ')"
+        Add-AuditResult "SECURITY" "secrets-in-code" "CRITICAL" "$($check.Name) détecté(s) dans le code" "Fichiers: $($foundSecrets -join ', ')"
     } else {
-        Add-AuditResult "SECURITY" "secrets-in-code" "PASS" "Aucun $($pattern.Name) détecté"
+        Add-AuditResult "SECURITY" "secrets-in-code" "PASS" "Aucun $($check.Name) détecté"
     }
 }
 
@@ -177,8 +178,8 @@ $externalUrls = @()
 foreach ($file in $allFiles) {
     $content = Get-Content $file.FullName -Raw -ErrorAction SilentlyContinue
     if ($content) {
-        $matches = [regex]::Matches($content, 'https?://[^\s''"`]+')
-        foreach ($match in $matches) {
+        $urlMatches = [regex]::Matches($content, "https?://[^\s]+")  
+        foreach ($match in $urlMatches) {
             if ($match.Value -notmatch "localhost|127\.0\.0\.1|example\.com") {
                 $externalUrls += @{
                     url = $match.Value
