@@ -144,4 +144,4 @@ Write-Host "   3. Test portable en droits utilisateur standard" -ForegroundColor
 Write-Host "   4. Installation silencieuse: .\`"USB Video Vault Setup 0.1.4.exe`" /S" -ForegroundColor Gray
 Write-Host "   5. Désinstallation silencieuse depuis Program Files" -ForegroundColor Gray
 
-Write-Host "`n🔍 Vérification terminée !" -ForegroundColor Cyan
+Write-Host "`nVerification terminee !" -ForegroundColor Cyan

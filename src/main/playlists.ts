@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
-import { getVaultRoot } from './vaultPath.js';
+import { getVaultRoot } from './vaultPath';
 
 let key: Buffer | null = null;
 export function setPlaylistsKey(k: Buffer) { key = k; }

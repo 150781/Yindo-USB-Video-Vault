@@ -4,10 +4,10 @@
 param(
     [Parameter(Mandatory=$true)]
     [string]$CertPath,
-    
+
     [Parameter(Mandatory=$true)]
     [string]$Password,
-    
+
     [string]$DistFolder = "dist"
 )
 
@@ -70,7 +70,7 @@ $executableFiles | ForEach-Object { Write-Host "  - $($_.FullName)" }
 $signedCount = 0
 foreach ($file in $executableFiles) {
     Write-Host "`nSignature: $($file.Name)..." -ForegroundColor Cyan
-    
+
     $args = @(
         "sign",
         "/fd", "SHA256",
@@ -81,13 +81,13 @@ foreach ($file in $executableFiles) {
         "/d", "USB Video Vault",
         $file.FullName
     )
-    
+
     try {
         & $signtool @args
         if ($LASTEXITCODE -eq 0) {
             Write-Host "✓ Signe avec succes: $($file.Name)" -ForegroundColor Green
             $signedCount++
-            
+
             # Vérification
             & $signtool "verify" "/pa" "/v" $file.FullName | Out-Null
             if ($LASTEXITCODE -eq 0) {

@@ -1,6 +1,7 @@
 // src/main/ipcStatsExtended.ts
-import { ipcMain } from 'electron';
-import { statsManager } from './index.js';
+import * as electron from 'electron';
+const { ipcMain } = electron;
+import { statsManager } from './index';
 
 /**
  * Handlers IPC pour les nouvelles fonctionnalités d'analytics étendus
@@ -59,7 +60,7 @@ export function registerStatsExtendedIPC() {
     try {
       const data = statsManager.getAll();
       const globalMetrics = statsManager.getGlobalMetrics();
-      
+
       const exportData = {
         timestamp: new Date().toISOString(),
         deviceId: (statsManager as any).deviceId,
@@ -73,7 +74,7 @@ export function registerStatsExtendedIPC() {
           ...(options?.includeAnomalies && { anomaliesCount: item.anomalies?.length || 0 })
         }))
       };
-      
+
       return { ok: true, data: exportData };
     } catch (e: any) {
       console.error('[STATS_EXTENDED] Erreur exportSecure:', e?.message);
@@ -87,7 +88,7 @@ export function registerStatsExtendedIPC() {
       const range = timeRange || 'week';
       const data = statsManager.getAll();
       const now = new Date();
-      
+
       // Calcul de la période
       let startDate: Date;
       switch (range) {
@@ -103,7 +104,7 @@ export function registerStatsExtendedIPC() {
         default:
           startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       }
-      
+
       // Analyse des patterns
       const patterns = {
         topPlayed: data
@@ -116,7 +117,7 @@ export function registerStatsExtendedIPC() {
             totalMs: item.totalMs,
             avgPlayDuration: item.playsCount > 0 ? item.totalMs / item.playsCount : 0
           })),
-        
+
         recentActivity: data
           .filter(item => item.lastPlayedAt && new Date(item.lastPlayedAt) >= startDate)
           .sort((a, b) => (b.lastPlayedAt || '').localeCompare(a.lastPlayedAt || ''))
@@ -126,7 +127,7 @@ export function registerStatsExtendedIPC() {
             lastPlayedAt: item.lastPlayedAt,
             playsCount: item.playsCount
           })),
-          
+
         timeRange: {
           start: startDate.toISOString(),
           end: now.toISOString(),
@@ -134,7 +135,7 @@ export function registerStatsExtendedIPC() {
           activeItems: data.filter(item => item.lastPlayedAt && new Date(item.lastPlayedAt) >= startDate).length
         }
       };
-      
+
       return { ok: true, patterns };
     } catch (e: any) {
       console.error('[STATS_EXTENDED] Erreur findPatterns:', e?.message);

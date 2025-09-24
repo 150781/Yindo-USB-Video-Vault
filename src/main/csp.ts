@@ -3,7 +3,9 @@
  * Bloque scripts inline, eval(), sources externes non autorisées
  */
 
-import { app, session, WebContents } from 'electron';
+import * as electron from 'electron';
+import type { WebContents } from 'electron';
+const { app, session } = electron;
 
 export interface CSPConfig {
   strict: boolean;
@@ -29,15 +31,15 @@ function generateCSP(config: CSPConfig = DEFAULT_CSP_CONFIG): string {
   const directives: Record<string, string[]> = {
     'default-src': ["'self'"],
     'script-src': ["'self'"],
-    'style-src': config.allowInlineStyles 
-      ? ["'self'", "'unsafe-inline'"] 
+    'style-src': config.allowInlineStyles
+      ? ["'self'", "'unsafe-inline'"]
       : ["'self'"],
-    'img-src': config.allowDataUris 
-      ? ["'self'", 'data:', 'blob:'] 
+    'img-src': config.allowDataUris
+      ? ["'self'", 'data:', 'blob:']
       : ["'self'"],
     'media-src': ["'self'", 'blob:', 'data:', 'asset:', 'vault:'],
-    'font-src': config.allowDataUris 
-      ? ["'self'", 'data:'] 
+    'font-src': config.allowDataUris
+      ? ["'self'", 'data:']
       : ["'self'"],
     'connect-src': ["'self'"],
     'worker-src': ["'self'", 'blob:'],
@@ -166,8 +168,8 @@ export function setupWebContentsCSP(webContents: WebContents, config?: Partial<C
 
   // Log des violations CSP
   webContents.session.webRequest.onHeadersReceived((details, callback) => {
-    if (details.url.startsWith('chrome-extension://') || 
-        details.url.startsWith('devtools://')) {
+    if (details.url.startsWith('chrome-extension://') ||
+      details.url.startsWith('devtools://')) {
       callback({});
       return;
     }
@@ -191,7 +193,7 @@ export function setupCSPViolationLogging(): void {
     if (details.url.includes('/csp-violation-report')) {
       console.warn('[CSP] Violation détectée:', details.url);
       console.warn('[CSP] Referrer:', details.referrer);
-      
+
       // Bloquer la requête (pas de serveur de rapport)
       callback({ cancel: true });
       return;
@@ -205,10 +207,10 @@ export function setupCSPViolationLogging(): void {
  */
 export function validateCSPCompliance(webContents: WebContents): void {
   webContents.on('console-message', (event, level, message, line, sourceId) => {
-    if (message.includes('Content Security Policy') || 
-        message.includes('CSP') ||
-        message.includes('unsafe-eval') ||
-        message.includes('unsafe-inline')) {
+    if (message.includes('Content Security Policy') ||
+      message.includes('CSP') ||
+      message.includes('unsafe-eval') ||
+      message.includes('unsafe-inline')) {
       console.warn(`[CSP] Violation détectée dans ${sourceId}:${line}`, message);
     }
   });

@@ -1,4 +1,6 @@
-import { ipcMain, BrowserWindow } from 'electron';
+import * as electron from 'electron';
+import type { BrowserWindow } from 'electron';
+const { ipcMain, BrowserWindow: BrowserWindowImpl } = electron;
 import {
   createDisplayWindow,
   closeDisplayWindowIfAny,
@@ -7,23 +9,23 @@ import {
   toggleDisplayFullscreen,
   getDisplayWindow,
   getControlWindow
-} from './windows.js';
-import { getManifestEntries, getCatalogEntries } from './manifest.js';
+} from './windows';
+import { getManifestEntries, getCatalogEntries } from './manifest';
 // License imports will be added later
-import { licenseStatus, unlockLicense, saveLicense, enterPassphrase } from './license.js';
-import { authorizeAndCount } from './playbackAuth.js';
-import { touchActivity } from './activity.js';
-import { unlockSession } from './index.js';
+import { licenseStatus, unlockLicense, saveLicense, enterPassphrase } from './license';
+import { authorizeAndCount } from './playbackAuth';
+import { touchActivity } from './activity';
+import { unlockSession } from './index';
 import {
   setQueue, addToQueue, clearQueue, getQueueState, playAt, playById,
   next as qNext, prev as qPrev, setRepeat as qSetRepeat, toggleShuffle as qToggleShuffle,
   removeFromQueue, removeFromQueueById, removeAt as qRemoveAt
-} from './queue.js';
-import { vaultManager, statsManager } from './index.js';
-import { listPlaylists, savePlaylist, removePlaylist, renamePlaylist, getPlaylistItems } from './playlists.js';
-import { PlayerQueue } from './playerQueue.js';
-import type { QueueItem, QueueState } from '../types/shared.js';
-import { whenDisplayReady } from './windows.js';
+} from './queue';
+import { vaultManager, statsManager } from './index';
+import { listPlaylists, savePlaylist, removePlaylist, renamePlaylist, getPlaylistItems } from './playlists';
+import { PlayerQueue } from './playerQueue';
+import type { QueueItem, QueueState } from '../types/shared';
+import { whenDisplayReady } from './windows';
 
 // Initialize PlayerQueue
 const queue = new PlayerQueue(getControlWindow, getDisplayWindow);
@@ -53,7 +55,7 @@ ipcMain.handle('display:toggleScreen', async () => {
 /*
 ipcMain.handle('player:open', async (_e, payload: { mediaId?: string, src?: string, title?: string, artist?: string }) => {
   console.log(`[IPC] player:open requested with payload:`, payload);
-  
+
   // Si c'est un asset, pas besoin d'autorisation
   if (payload.src) {
     let dw = getDisplayWindow();
@@ -119,7 +121,7 @@ ipcMain.handle('player:open', async (_e, payload: { mediaId?: string, src?: stri
 
 // Display => Control (statut)
 ipcMain.on('player:status:update', (event, status) => {
-  for (const w of BrowserWindow.getAllWindows()) {
+  for (const w of BrowserWindowImpl.getAllWindows()) {
     if (w.webContents.id !== event.sender.id) {
       w.webContents.send('player:status:update', status);
     }
@@ -179,19 +181,19 @@ ipcMain.handle('license:status', async () => licenseStatus());
 // Main license:enter handler - always allows unlock attempts
 ipcMain.handle('license:enter', async (_e, passphrase: string) => {
   const DEV_PASSPHRASE = process.env.VAULT_DEV_PASSPHRASE || 'test123';
-  
+
   try {
     // Allow unlock attempt even if already unlocked
     console.log('[license:enter] tentative de déverrouillage...');
-    
+
     if ((passphrase || '').trim() !== DEV_PASSPHRASE) {
       console.log('[license:enter] mot de passe incorrect');
       return { ok: false, error: 'Mot de passe invalide' };
     }
-    
+
     // Try to unlock both legacy license and vault
     await unlockLicense();
-    
+
     if (vaultManager) {
       try {
         vaultManager.unlock(passphrase);
@@ -201,10 +203,10 @@ ipcMain.handle('license:enter', async (_e, passphrase: string) => {
         console.warn('[license:enter] vault unlock failed:', e);
       }
     }
-    
+
     // Unlock session and restart timer
     unlockSession();
-    
+
     console.log('[license:enter] déverrouillage réussi');
     return { ok: true };
   } catch (e: any) {
@@ -216,7 +218,7 @@ ipcMain.handle('license:enter', async (_e, passphrase: string) => {
 ipcMain.handle('license:unlock', async (_e, { pass }: { pass?: string } = {}) => {
   // 1) Unlock legacy license
   const legacyOk = await unlockLicense();
-  
+
   // 2) Si pass fourni, tentative de déverrouillage vault aussi
   if (pass && vaultManager) {
     try {
@@ -229,11 +231,11 @@ ipcMain.handle('license:unlock', async (_e, { pass }: { pass?: string } = {}) =>
       // Pas d'erreur fatale : on continue avec le legacy
     }
   }
-  
+
   // Update activity on any unlock attempt
   touchActivity();
   console.log('[license:unlock] activité mise à jour après déverrouillage');
-  
+
   return { ok: legacyOk };
 });
 ipcMain.handle('license:save', async (_e, { bodyJson, sigB64 }) => {
@@ -273,9 +275,9 @@ ipcMain.handle('queue:removeAt', async (_e, index: number) => queue.removeAt(ind
 ipcMain.handle('queue:clear', async () => queue.clear());
 ipcMain.handle('queue:playAt', async (_e, index: number) => queue.playAt(index));
 ipcMain.handle('queue:playNow', async (_e, item: QueueItem) => queue.playNow(item));
-ipcMain.handle('queue:repeat', async (_e, mode: QueueState['repeat']) => { 
+ipcMain.handle('queue:repeat', async (_e, mode: QueueState['repeat']) => {
   console.log('[IPC] queue:repeat called with mode:', mode);
-  queue.setRepeat(mode); 
+  queue.setRepeat(mode);
   const state = queue.getState();
   console.log('[IPC] queue:repeat returning state:', state);
   return state;
@@ -369,10 +371,10 @@ ipcMain.handle('catalog:list', async () => {
     // Combinaison : catalogue legacy + vault (si déverrouillé)
     const legacyCatalog = await getCatalogEntries();
     const vaultCatalog = (vaultManager && vaultManager.isUnlocked()) ? vaultManager.getCatalog() : [];
-    
+
     const combined = [...legacyCatalog, ...vaultCatalog];
     console.log(`[catalog] retour: ${legacyCatalog.length} legacy + ${vaultCatalog.length} vault = ${combined.length} total`);
-    
+
     return { ok: true, list: combined };
   } catch (e) {
     console.warn('[catalog] erreur:', e);

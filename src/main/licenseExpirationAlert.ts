@@ -1,7 +1,10 @@
 // License Expiration Alert System
 // Système d'alerte d'expiration de licence USB Video Vault
 
-import { BrowserWindow, dialog, shell } from 'electron';
+import * as electron from 'electron';
+import type { BrowserWindow } from 'electron';
+const { BrowserWindow: BrowserWindowImpl, dialog, shell } = electron;
+import { spawn } from 'child_process';
 
 export interface ExpirationAlert {
   daysRemaining: number;
@@ -34,12 +37,12 @@ export class LicenseExpirationManager {
   async checkAndShowExpirationAlert(licenseData: any): Promise<void> {
     try {
       const alert = this.evaluateExpiration(licenseData);
-      
+
       if (alert && this.shouldShowAlert(alert)) {
         await this.showExpirationAlert(alert);
         this.lastAlertShown = Date.now();
       }
-      
+
     } catch (error) {
       console.error('❌ Erreur vérification expiration:', error);
     }
@@ -165,20 +168,20 @@ export class LicenseExpirationManager {
   // Déterminer si l'alerte doit être affichée
   private shouldShowAlert(alert: ExpirationAlert): boolean {
     const timeSinceLastAlert = Date.now() - this.lastAlertShown;
-    
+
     switch (alert.severity) {
       case 'expired':
         return true; // Toujours afficher pour licence expirée
-        
+
       case 'critical':
         return timeSinceLastAlert > (6 * 60 * 60 * 1000); // Toutes les 6 heures
-        
+
       case 'warning':
         return timeSinceLastAlert > (24 * 60 * 60 * 1000); // Une fois par jour
-        
+
       case 'info':
         return timeSinceLastAlert > (7 * 24 * 60 * 60 * 1000); // Une fois par semaine
-        
+
       default:
         return false;
     }
@@ -207,7 +210,7 @@ export class LicenseExpirationManager {
 
     } catch (error) {
       console.error('❌ Erreur affichage alerte:', error);
-      
+
       // Fallback : alerte simple
       const result = await dialog.showMessageBox({
         type: 'warning',
@@ -237,14 +240,13 @@ export class LicenseExpirationManager {
       case 'check_license':
         // Ouvrir l'outil de vérification de licence
         try {
-          const { spawn } = require('child_process');
           spawn('node', ['tools/verify-license.mjs', '--verbose'], {
             detached: true,
             stdio: 'ignore'
           });
         } catch (error) {
           console.error('❌ Erreur ouverture vérificateur licence:', error);
-          
+
           // Fallback : montrer les infos dans une boîte de dialogue
           await dialog.showMessageBox({
             type: 'info',
@@ -295,20 +297,20 @@ export class LicenseExpirationManager {
   // Obtenir informations additionnelles
   private getAdditionalInfo(alert: ExpirationAlert): string {
     const baseInfo = `Expire dans: ${alert.daysRemaining} jour(s)`;
-    
+
     switch (alert.severity) {
       case 'expired':
         return `${baseInfo}\n\n⚠️ L'application ne peut plus fonctionner avec une licence expirée.`;
-        
+
       case 'critical':
         return `${baseInfo}\n\n🚨 Action urgente requise pour éviter l'interruption du service.`;
-        
+
       case 'warning':
         return `${baseInfo}\n\n💡 Commencez le processus de renouvellement maintenant.`;
-        
+
       case 'info':
         return `${baseInfo}\n\n📋 Information pour planification future.`;
-        
+
       default:
         return baseInfo;
     }

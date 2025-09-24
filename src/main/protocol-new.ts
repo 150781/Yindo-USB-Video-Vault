@@ -1,13 +1,14 @@
 import path from 'path';
 import fs from 'fs';
 import fsp from 'fs/promises';
-import { protocol, app } from 'electron';
+import * as electron from 'electron';
+const { protocol, app } = electron;
 import { Readable } from 'stream';
 import crypto from 'crypto';
 import mime from 'mime-types';
 
-import { getVaultRoot } from './vaultPath.js';
-import { isLicenseLoaded, unwrapCEK } from './license.js';
+import { getVaultRoot } from './vaultPath';
+import { isLicenseLoaded, unwrapCEK } from './license';
 
 // Convertit un Readable Node en ReadableStream Web (pour Response)
 function toWeb(stream: Readable): ReadableStream {

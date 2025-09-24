@@ -1,6 +1,6 @@
-import { getDisplayWindow, createDisplayWindow, whenDisplayReady } from './windows.js';
-import { authorizeAndCount } from './playbackAuth.js';
-import { getManifestEntries } from './manifest.js';
+import { getDisplayWindow, createDisplayWindow, whenDisplayReady } from './windows';
+import { authorizeAndCount } from './playbackAuth';
+import { getManifestEntries } from './manifest';
 
 export type RepeatMode = 'off'|'one'|'all';
 export type QueueState = { queue: string[]; index: number; currentId?: string; shuffle: boolean; repeat: RepeatMode };

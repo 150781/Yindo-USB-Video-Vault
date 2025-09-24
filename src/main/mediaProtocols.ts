@@ -1,21 +1,22 @@
-import { app, protocol, session } from 'electron';
+import * as electron from 'electron';
+const { app, protocol, session } = electron;
 import path from 'path';
 import fs from 'fs';
-import { VaultManager } from './vault.js';
+import { VaultManager } from './vault';
 
 export function registerMediaProtocols(vaultManager: VaultManager) {
   // En développement, utilisez le chemin source réel
   const isDev = process.env.NODE_ENV !== 'production';
   let ASSETS_DIR: string;
-  
+
   if (isDev) {
-    // Mode dev : remonte depuis dist/main vers src/assets/media  
+    // Mode dev : remonte depuis dist/main vers src/assets/media
     ASSETS_DIR = path.join(app.getAppPath(), '..', '..', 'src', 'assets', 'media');
   } else {
     // Mode production : assets probablement dans resources/
     ASSETS_DIR = path.join(app.getAppPath(), 'src', 'assets', 'media');
   }
-  
+
   console.log('[main] Début d\'enregistrement des protocoles médias');
   console.log('[main] ASSETS_DIR =', ASSETS_DIR);
 
@@ -25,11 +26,11 @@ export function registerMediaProtocols(vaultManager: VaultManager) {
       try {
         const url = decodeURIComponent(req.url.replace('asset://', '')); // "media/xxx.ext"
         let filePath: string;
-        
+
         // Retirer le préfixe "media/" de l'URL car ASSETS_DIR pointe déjà vers le bon dossier
         const fileName = url.replace(/^media\//, '');
         filePath = path.join(ASSETS_DIR, fileName);
-        
+
         console.log('[protocol asset] résolution:', url, '->', filePath);
         cb({ path: filePath });
       } catch (e) {
@@ -49,7 +50,7 @@ export function registerMediaProtocols(vaultManager: VaultManager) {
         const url = decodeURIComponent(req.url.replace('vault://', '')); // "media/<id>"
         const [, id] = url.split('/'); // media/<id>
         // TODO: remplace par ta vraie résolution de fichier depuis l'ID
-        const filePath = resolveVaultPathFromId(id, ASSETS_DIR); 
+        const filePath = resolveVaultPathFromId(id, ASSETS_DIR);
         console.log('[protocol vault] résolution:', url, '->', filePath);
         const stream = fs.createReadStream(filePath);
         cb({ data: stream, statusCode: 200, headers: { 'Content-Type': 'video/mp4' } });

@@ -1,15 +1,12 @@
 import { app, BrowserWindow, screen } from 'electron';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import fs from 'fs';
-import { playerSecurity } from './playerSecurity.js';
-import { getSandboxWebPreferences, setupKioskProtection, validateSandboxConfig } from './sandbox.js';
-import { setupWebContentsCSP } from './csp.js';
-import { setupWebContentsAntiDebug } from './antiDebug.js';
+import * as path from 'path';
+import * as fs from 'fs';
+import { playerSecurity } from './playerSecurity';
+import { getSandboxWebPreferences, setupKioskProtection, validateSandboxConfig } from './sandbox';
+import { setupWebContentsCSP } from './csp';
+import { setupWebContentsAntiDebug } from './antiDebug';
 
-// Obtenir __dirname en ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __filename et __dirname sont automatiquement disponibles en CommonJS
 
 let controlWindow: BrowserWindow | null = null;
 let displayWindow: BrowserWindow | null = null;
@@ -40,7 +37,7 @@ function loadURL(win: BrowserWindow, page: 'index' | 'display') {
     console.log(`[loadURL PROD] __dirname is: ${__dirname}`);
     console.log(`[loadURL PROD] app.getAppPath() is: ${app.getAppPath()}`);
     console.log(`[loadURL PROD] process.resourcesPath is: ${process.resourcesPath}`);
-    
+
     win.loadFile(filePath).catch(err => {
       console.error(`[loadURL PROD] Failed to load ${filePath}:`, err);
     });
@@ -69,27 +66,27 @@ export async function createControlWindow() {
       devTools: isDev  // DevTools seulement en dev, pas en prod/tests
     }
   });
-  
+
   // Logs de débogage pour le chargement
   controlWindow.webContents.on('did-fail-load', (_e, code, desc, url) => {
     console.error('[Control did-fail-load]', code, desc, url);
   });
   controlWindow.webContents.on('did-finish-load', () => {
     console.log('[Control did-finish-load]');
-    
+
     // === SÉCURITÉ ===
     // Validation sandbox et CSP
     if (controlWindow) {
       validateSandboxConfig(controlWindow.webContents);
       setupWebContentsCSP(controlWindow.webContents);
       setupKioskProtection(controlWindow);
-      
+
       // Protection anti-debug (seulement en production)
       if (!isDev) {
         setupWebContentsAntiDebug(controlWindow.webContents);
       }
     }
-    
+
     // Forcer l'affichage de la fenêtre après le chargement
     if (controlWindow && !controlWindow.isDestroyed()) {
       console.log('[Control] Affichage forcé de la fenêtre de contrôle');
@@ -109,16 +106,16 @@ export async function createControlWindow() {
   controlWindow.webContents.on('dom-ready', () => {
     console.log('[Control dom-ready]');
   });
-  
+
   // DevTools temporaires pour debug
   console.log('[DEBUG] Opening DevTools for testing');
   controlWindow.webContents.openDevTools({ mode: 'detach' });
-  
+
   controlWindow.on('closed', () => (controlWindow = null));
-  
+
   // Bloquer les ouvertures externes
   controlWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  
+
   loadURL(controlWindow, 'index');
   return controlWindow;
 }
@@ -168,7 +165,7 @@ export async function createDisplayWindow(targetDisplayId?: number) {
     }
     displayWindow = null;
   });
-  
+
   // Bloquer les ouvertures externes
   displayWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
 
@@ -177,20 +174,20 @@ export async function createDisplayWindow(targetDisplayId?: number) {
   });
   displayWindow.webContents.on('did-finish-load', async () => {
     console.log('[Display did-finish-load]');
-    
+
     // === SÉCURITÉ ===
     // Validation sandbox et CSP
     if (displayWindow) {
       validateSandboxConfig(displayWindow.webContents);
       setupWebContentsCSP(displayWindow.webContents);
       setupKioskProtection(displayWindow);
-      
+
       // Protection anti-debug (seulement en production)
       if (!isDev) {
         setupWebContentsAntiDebug(displayWindow.webContents);
       }
     }
-    
+
     // Activer la sécurité du lecteur si la fenêtre display est créée
     if (displayWindow) {
       try {
@@ -220,7 +217,7 @@ export async function createDisplayWindow(targetDisplayId?: number) {
         console.error('[SECURITY] ❌ Erreur activation sécurité DisplayWindow:', error);
       }
     }
-    
+
     // Notifier le module IPC Player que la fenêtre display est prête
     displayWindow?.webContents.send('display:ready');
   });

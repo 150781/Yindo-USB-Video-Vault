@@ -50,7 +50,7 @@ npx electron-builder --win nsis portable --publish never
 
 ### Test sur machine propre
 1. Copiez les fichiers .exe sur une machine sans outils de dev
-2. **Portable**: Double-clic sur `USB Video Vault 0.1.4.exe` 
+2. **Portable**: Double-clic sur `USB Video Vault 0.1.4.exe`
 3. **Installateur**: Exécutez `USB Video Vault Setup 0.1.4.exe`
 
 ---

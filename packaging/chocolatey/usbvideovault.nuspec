@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2015/06/nuspec.xsd">
+  <metadata>
+    <id>usbvideovault</id>
+    <version>0.1.4</version>
+    <packageSourceUrl>https://github.com/150781/Yindo-USB-Video-Vault</packageSourceUrl>
+    <owners>Yindo</owners>
+    <title>USB Video Vault</title>
+    <authors>Yindo</authors>
+    <projectUrl>https://github.com/150781/Yindo-USB-Video-Vault</projectUrl>
+    <iconUrl>https://raw.githubusercontent.com/150781/Yindo-USB-Video-Vault/master/build/icon.ico</iconUrl>
+    <copyright>Copyright (c) 2025 Yindo</copyright>
+    <licenseUrl>https://github.com/150781/Yindo-USB-Video-Vault/blob/master/LICENSE</licenseUrl>
+    <requireLicenseAcceptance>true</requireLicenseAcceptance>
+    <projectSourceUrl>https://github.com/150781/Yindo-USB-Video-Vault</projectSourceUrl>
+    <docsUrl>https://github.com/150781/Yindo-USB-Video-Vault/wiki</docsUrl>
+    <bugTrackerUrl>https://github.com/150781/Yindo-USB-Video-Vault/issues</bugTrackerUrl>
+    <tags>media video vault security encryption usb enterprise drm admin</tags>
+    <summary>Secure USB video vault application for professional media management</summary>
+    <description><![CDATA[USB Video Vault is a professional application for secure media management with advanced encryption, licensing, and playback controls. 
+
+Features:
+- Hardware-bound licensing system
+- AES-256 encrypted media storage
+- Professional playlist management
+- Enterprise-grade security controls
+- Silent installation support for IT deployment
+- Code signed binaries for SmartScreen compatibility
+
+Perfect for organizations requiring secure media distribution and playback control.
+]]></description>
+    <releaseNotes>https://github.com/150781/Yindo-USB-Video-Vault/releases/tag/v0.1.4</releaseNotes>
+  </metadata>
+  <files>
+    <file src="tools\**" target="tools" />
+  </files>
+</package>

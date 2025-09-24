@@ -1,5 +1,6 @@
-import { ipcMain } from 'electron';
-import { createDisplayWindow, getDisplayWindow, getControlWindow } from './windows.js';
+import * as electron from 'electron';
+const { ipcMain } = electron;
+import { createDisplayWindow, getDisplayWindow, getControlWindow } from './windows';
 
 type QueueItem = {
   id: string;
@@ -30,7 +31,7 @@ function sendToDisplay(channel: string, payload: any) {
     console.warn('[QUEUE] Pas de fenêtre display ou détruite');
     return;
   }
-  
+
   console.log('[QUEUE] Fenêtre display trouvée, displayReady =', displayReady);
   if (displayReady) {
     console.log('[QUEUE] Envoi immédiat du message');
@@ -85,7 +86,7 @@ async function ensureDisplayAndSend(payload: any) {
     console.log('[QUEUE] Fenêtre display prête, envoi message...');
     sendToDisplay('player:open', payload);
     console.log('[QUEUE] Message player:open envoyé');
-    
+
     // Envoyer les informations de la prochaine chanson
     sendNextSongInfo();
   } catch (e) {
@@ -96,7 +97,7 @@ async function ensureDisplayAndSend(payload: any) {
 function sendNextSongInfo() {
   const nextIndex = queueState.currentIndex + 1;
   let nextItem: QueueItem | null = null;
-  
+
   if (queueState.repeatMode === 'all' && nextIndex >= queueState.items.length) {
     // En mode repeat all, revenir au début
     nextItem = queueState.items[0] || null;
@@ -104,12 +105,12 @@ function sendNextSongInfo() {
     // Chanson suivante normale
     nextItem = queueState.items[nextIndex];
   }
-  
+
   if (nextItem) {
     console.log('[QUEUE] Envoi info prochaine chanson:', nextItem.title, '-', nextItem.artist);
-    sendToDisplay('player:next-info', { 
-      title: nextItem.title, 
-      artist: nextItem.artist 
+    sendToDisplay('player:next-info', {
+      title: nextItem.title,
+      artist: nextItem.artist
     });
   } else {
     console.log('[QUEUE] Pas de prochaine chanson, nettoyage display');
@@ -177,7 +178,7 @@ ipcMain.handle('queue:next', async () => {
   queueState.isPaused = false;
   const it = queueState.items[next];
   const payload = toOpenPayload(it);
-  if (payload) { 
+  if (payload) {
     console.log('[QUEUE] next - passage à la chanson suivante:', payload.title);
     await ensureDisplayAndSend(payload);
   }
@@ -192,7 +193,7 @@ ipcMain.handle('queue:prev', async () => {
   queueState.isPaused = false;
   const it = queueState.items[prev];
   const payload = toOpenPayload(it);
-  if (payload) { 
+  if (payload) {
     console.log('[QUEUE] prev - passage à la chanson précédente:', payload.title);
     await ensureDisplayAndSend(payload);
   }
@@ -202,10 +203,10 @@ ipcMain.handle('queue:prev', async () => {
 ipcMain.handle('queue:playNow', async (_e, item: QueueItem) => {
   const arr = Array.isArray(item) ? item : [item];
   const targetId = arr[0]?.id;
-  
+
   // Vérifier si l'élément existe déjà dans la queue
   const existingIdx = queueState.items.findIndex(x => x.id === targetId);
-  
+
   if (existingIdx >= 0) {
     // L'élément existe déjà, juste le jouer sans l'ajouter
     queueState.currentIndex = existingIdx;
@@ -217,7 +218,7 @@ ipcMain.handle('queue:playNow', async (_e, item: QueueItem) => {
     queueState.currentIndex = idx >= 0 ? idx : queueState.items.length - 1;
     console.log('[QUEUE] playNow - nouvel élément ajouté à l\'index:', queueState.currentIndex);
   }
-  
+
   // Mise à jour état de lecture
   queueState.isPlaying = true;
   queueState.isPaused = false;
@@ -245,10 +246,10 @@ ipcMain.handle('queue:getRepeat', async () => {
 
 ipcMain.handle('queue:reorder', async (_e, fromIndex: number, toIndex: number) => {
   console.log('[QUEUE] reorder appelé: fromIndex =', fromIndex, ', toIndex =', toIndex);
-  
+
   if (fromIndex < 0 || fromIndex >= queueState.items.length ||
-      toIndex < 0 || toIndex >= queueState.items.length ||
-      fromIndex === toIndex) {
+    toIndex < 0 || toIndex >= queueState.items.length ||
+    fromIndex === toIndex) {
     console.warn('[QUEUE] reorder - indices invalides');
     return queueState;
   }
@@ -289,23 +290,23 @@ ipcMain.handle('stats:played', async (_e, payload: { id: string; playedMs?: numb
 
 // Event depuis Display (ex: ended) - gestion repeat/next automatique
 ipcMain.on('player:event', async (_e, payload) => {
-  
+
   // 🔥 DEBUG - Afficher tous les événements reçus
   console.log('[QUEUE] player:event reçu:', payload);
-  
+
   if (payload?.type === 'test-onended') {
     console.log('[QUEUE] 🔥🔥🔥 TEST-ONENDED reçu ! La fonction onEnded fonctionne !', payload.message);
     return;
   }
-  
-  if (payload?.type === 'ended') { 
+
+  if (payload?.type === 'ended') {
     console.log('[QUEUE] player:event ended reçu - gestion du repeat/next');
-    console.log('[QUEUE] État actuel:', { 
-      repeatMode: queueState.repeatMode, 
-      currentIndex: queueState.currentIndex, 
-      itemsLength: queueState.items.length 
+    console.log('[QUEUE] État actuel:', {
+      repeatMode: queueState.repeatMode,
+      currentIndex: queueState.currentIndex,
+      itemsLength: queueState.items.length
     });
-    
+
     // 🔥 AUTO-INCREMENT DES VUES 🔥
     const currentItem = queueState.items[queueState.currentIndex];
     if (currentItem?.id) {
@@ -315,7 +316,7 @@ ipcMain.on('player:event', async (_e, payload) => {
       }
       statsById[currentItem.id]++;
       console.log('[QUEUE] 📊 Nouvelles vues pour', currentItem.title || currentItem.id, ':', statsById[currentItem.id]);
-      
+
       // Notifier le renderer que les stats ont été mises à jour
       try {
         const controlWindow = getControlWindow();
@@ -329,7 +330,7 @@ ipcMain.on('player:event', async (_e, payload) => {
         console.error('[QUEUE] 📊 Erreur lors de la notification stats:', e);
       }
     }
-    
+
     if (queueState.repeatMode === 'one') {
       // Répéter la chanson actuelle - relancer la lecture
       console.log('[QUEUE] Mode repeat "one" - relance de la chanson actuelle');

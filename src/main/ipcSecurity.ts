@@ -2,9 +2,10 @@
  * IPC pour le contrôle de la sécurité du lecteur
  */
 
-import { ipcMain } from 'electron';
-import { playerSecurity } from './playerSecurity.js';
-import { DisplaySecurity } from '../types/security.js';
+import * as electron from 'electron';
+const { ipcMain } = electron;
+import { playerSecurity } from './playerSecurity';
+import { DisplaySecurity } from '../types/security';
 
 export function registerSecurityIPC() {
   console.log('[SECURITY IPC] Enregistrement des handlers...');

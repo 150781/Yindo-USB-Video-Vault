@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from "electron";
-import { queueState } from "./ipcQueue.js";
+import { queueState } from './ipcQueue';
 
 export function registerPlayerIPC(getDisplayWin: () => BrowserWindow | null) {
   let currentMediaKey: string | null = null;

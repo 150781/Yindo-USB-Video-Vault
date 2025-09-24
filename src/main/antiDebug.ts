@@ -3,7 +3,9 @@
  * Détection et blocage des outils de développement
  */
 
-import { app, BrowserWindow, WebContents, session } from 'electron';
+import * as electron from 'electron';
+import type { BrowserWindow, WebContents } from 'electron';
+const { app, BrowserWindow: BrowserWindowImpl, session } = electron;
 
 export interface AntiDebugConfig {
   blockDevTools: boolean;
@@ -84,10 +86,10 @@ export function setupDevToolsBlocking(): void {
     webContents.on('devtools-opened', () => {
       console.warn('[ANTIDEBUG] DevTools détectés - fermeture forcée');
       webContents.closeDevTools();
-      
+
       // Optionnel: fermer l'application
       if (!app.isPackaged) return; // Autoriser en dev
-      
+
       setTimeout(() => {
         console.error('[ANTIDEBUG] Application fermée - DevTools non autorisés');
         app.quit();
@@ -115,7 +117,7 @@ export function setupDevToolsBlocking(): void {
         if (combo.key !== input.key) return false;
         if (!combo.modifiers) return currentModifiers.length === 0;
         return combo.modifiers.every(mod => currentModifiers.includes(mod)) &&
-               combo.modifiers.length === currentModifiers.length;
+          combo.modifiers.length === currentModifiers.length;
       });
 
       if (isBlocked) {
@@ -169,7 +171,7 @@ export function setupConsoleObfuscation(webContents: WebContents): void {
         const currentTime = performance.now();
         const timeDiff = currentTime - debugStartTime;
         debugStartTime = currentTime;
-        
+
         // Si l'intervalle prend plus de 100ms, possible debugger
         if (timeDiff > 100) {
           console.warn('[ANTIDEBUG] Anomalie timing détectée');
@@ -297,7 +299,7 @@ export function setupDebuggerDetection(webContents: WebContents): void {
         const start = performance.now();
         debugger; // Point d'arrêt intentionnel
         const end = performance.now();
-        
+
         if (end - start > 100) {
           debuggerDetected = true;
           console.warn('[ANTIDEBUG] Debugger détecté par timing');
@@ -337,7 +339,7 @@ export function setupDebuggerDetection(webContents: WebContents): void {
           exceptionDetection();
           consoleDetection();
         }
-        
+
         if (debuggerDetected) {
           console.error('[ANTIDEBUG] ⚠️ Debugger détecté - Mode sécurisé activé');
           // Actions défensives possibles:
@@ -369,15 +371,15 @@ export function setupMemoryProtection(): void {
   // Désactiver le profiling
   app.commandLine.appendSwitch('disable-dev-shm-usage');
   app.commandLine.appendSwitch('disable-background-timer-throttling');
-  
+
   // Surveiller l'utilisation mémoire
   setInterval(() => {
     const memUsage = process.memoryUsage();
     const usedMB = Math.round(memUsage.heapUsed / 1024 / 1024);
-    
+
     if (usedMB > 256) { // Limite arbitraire
       console.warn(`[ANTIDEBUG] Utilisation mémoire élevée: ${usedMB}MB`);
-      
+
       // Forcer garbage collection si possible
       if (global.gc) {
         global.gc();
@@ -393,38 +395,38 @@ export function setupMemoryProtection(): void {
 export function initializeAntiDebugProtection(config?: Partial<AntiDebugConfig>): void {
   const isDev = detectDebugEnvironment();
   const mergedConfig = { ...(isDev ? DEV_ANTIDEBUG_CONFIG : STRICT_ANTIDEBUG_CONFIG), ...config };
-  
+
   console.log(`[ANTIDEBUG] Initialisation ${isDev ? 'DEV' : 'PRODUCTION'}`);
-  
+
   if (mergedConfig.antiVMDetection && detectVirtualization()) {
     console.warn('[ANTIDEBUG] ⚠️ Environnement virtualisé détecté');
   }
-  
+
   if (mergedConfig.blockDevTools) {
     setupDevToolsBlocking();
   }
-  
+
   if (mergedConfig.memoryProtection) {
     setupMemoryProtection();
   }
-  
+
   // Protections spécifiques aux WebContents
   app.on('web-contents-created', (event, webContents) => {
     webContents.on('dom-ready', () => {
       if (mergedConfig.obfuscateConsole) {
         setupConsoleObfuscation(webContents);
       }
-      
+
       if (mergedConfig.preventInspection) {
         setupInjectionProtection(webContents);
       }
-      
+
       if (mergedConfig.detectDebugger) {
         setupDebuggerDetection(webContents);
       }
     });
   });
-  
+
   console.log('[ANTIDEBUG] ✅ Toutes les protections anti-debug activées');
 }
 
@@ -433,18 +435,18 @@ export function initializeAntiDebugProtection(config?: Partial<AntiDebugConfig>)
  */
 export function setupWebContentsAntiDebug(webContents: WebContents, config?: Partial<AntiDebugConfig>): void {
   const mergedConfig = { ...STRICT_ANTIDEBUG_CONFIG, ...config };
-  
+
   if (mergedConfig.obfuscateConsole) {
     setupConsoleObfuscation(webContents);
   }
-  
+
   if (mergedConfig.preventInspection) {
     setupInjectionProtection(webContents);
   }
-  
+
   if (mergedConfig.detectDebugger) {
     setupDebuggerDetection(webContents);
   }
-  
+
   console.log('[ANTIDEBUG] WebContents sécurisé');
 }

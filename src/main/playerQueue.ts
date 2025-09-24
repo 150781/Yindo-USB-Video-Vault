@@ -1,26 +1,28 @@
 // src/main/playerQueue.ts
-import { BrowserWindow } from 'electron';
-import { QueueItem, QueueState } from '../types/shared.js';
-import { createDisplayWindow } from './windows.js';
+import * as electron from 'electron';
+import type { BrowserWindow } from 'electron';
+const { BrowserWindow: BrowserWindowImpl } = electron;
+import { QueueItem, QueueState } from '../types/shared';
+import { createDisplayWindow } from './windows';
 
 export class PlayerQueue {
   private state: QueueState = { items: [], currentIndex: -1, repeat: 'off' };
   constructor(
     private getControlWin: () => BrowserWindow | null,
     private getDisplayWin: () => BrowserWindow | null,
-  ) {}
+  ) { }
 
   getState() { return this.state; }
   private emitQueueUpdate() {
     const cw = this.getControlWin(); if (cw) cw.webContents.send('queue:update', this.state);
   }
 
-  setRepeat(mode: QueueState['repeat']) { 
+  setRepeat(mode: QueueState['repeat']) {
     console.log('[PlayerQueue] setRepeat called with mode:', mode);
     console.log('[PlayerQueue] Previous repeat mode:', this.state.repeat);
-    this.state.repeat = mode; 
+    this.state.repeat = mode;
     console.log('[PlayerQueue] New repeat mode:', this.state.repeat);
-    this.emitQueueUpdate(); 
+    this.emitQueueUpdate();
   }
 
   add(item: QueueItem) {
@@ -54,7 +56,7 @@ export class PlayerQueue {
     this.state.currentIndex = index;
     this.emitQueueUpdate();
     const it = this.state.items[index];
-    
+
     // Créer la fenêtre d'affichage si elle n'existe pas
     let dw = this.getDisplayWin();
     if (!dw || dw.isDestroyed()) {
@@ -66,16 +68,16 @@ export class PlayerQueue {
       console.error('[PlayerQueue] Failed to create display window');
       return false;
     }
-    
+
     console.log('[PlayerQueue] Playing item:', JSON.stringify(it, null, 2));
-    
-    // Pour les assets, utiliser src; pour vault utiliser mediaId 
+
+    // Pour les assets, utiliser src; pour vault utiliser mediaId
     const payload = {
-      title: it.title, 
+      title: it.title,
       artist: it.artist,
       id: it.id  // Ajouter l'ID pour les stats
     } as any;
-    
+
     if (it.source === 'asset' && it.src) {
       payload.src = it.src;
     } else if (it.source === 'vault') {
@@ -84,9 +86,9 @@ export class PlayerQueue {
       console.error('[PlayerQueue] Invalid item source or missing src/id:', it);
       return false;
     }
-    
+
     console.log('[PlayerQueue] Sending payload:', JSON.stringify(payload, null, 2));
-    
+
     dw.webContents.send('player:open', payload);
     // auto play
     dw.webContents.send('player:control', { action: 'play' });

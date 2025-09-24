@@ -1,0 +1,24 @@
+# Created using wingetcreate 1.6.1.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+
+PackageIdentifier: Yindo.USBVideoVault
+PackageVersion: 0.1.4
+Platform:
+- Windows.Desktop
+MinimumOSVersion: 10.0.19041.0
+InstallerType: nullsoft
+Scope: machine
+InstallModes:
+- interactive
+- silent
+- silentWithProgress
+UpgradeBehavior: install
+ReleaseDate: 2025-09-24
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/150781/Yindo-USB-Video-Vault/releases/download/v0.1.4/USB%20Video%20Vault%20Setup%200.1.4.exe
+  InstallerSha256: [PLACEHOLDER - Replace with actual SHA256 from release]
+  SignatureSha256: [PLACEHOLDER - Replace with actual signature hash]
+  ProductCode: '{PLACEHOLDER - Extract from NSIS build}'
+ManifestType: installer
+ManifestVersion: 1.6.0

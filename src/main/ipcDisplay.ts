@@ -1,5 +1,6 @@
-import { ipcMain } from 'electron';
-import { createDisplayWindow, closeDisplayWindowIfAny } from './windows.js';
+import * as electron from 'electron';
+const { ipcMain } = electron;
+import { createDisplayWindow, closeDisplayWindowIfAny } from './windows';
 
 ipcMain.handle('display:open', async () => {
   await createDisplayWindow();

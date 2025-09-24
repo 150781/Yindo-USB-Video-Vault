@@ -28,7 +28,7 @@ $iconStream = $null
 try {
     $bitmap = New-Object System.Drawing.Bitmap($InputPath)
     Write-Host "📏 Image source: $($bitmap.Width)x$($bitmap.Height)"
-    
+
     # Redimensionner à 512x512 si nécessaire
     if ($bitmap.Width -ne 512 -or $bitmap.Height -ne 512) {
         Write-Host "🔄 Redimensionnement vers 512x512..."
@@ -40,14 +40,14 @@ try {
         $bitmap.Dispose()
         $bitmap = $resized
     }
-    
+
     # Conversion vers ICO
     $iconStream = New-Object System.IO.MemoryStream
     $bitmap.Save($iconStream, [System.Drawing.Imaging.ImageFormat]::Icon)
     [System.IO.File]::WriteAllBytes($OutputPath, $iconStream.ToArray())
-    
+
     Write-Host "✅ Icône convertie avec succès !" -ForegroundColor Green
-    
+
     $fileSize = (Get-Item $OutputPath).Length
     Write-Host "📊 Fichier ICO: $([math]::Round($fileSize/1KB, 2)) KB"
 }

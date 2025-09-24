@@ -4,9 +4,9 @@ import fsp from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
 import nacl from 'tweetnacl';
-import { getVaultRoot } from './vaultPath.js';
-import { getDeviceIds } from '../shared/device.js';
-import { PACKAGER_PUBLIC_KEY_B64 } from '../shared/keys/packagerPublicKey.js';
+import { getVaultRoot } from './vaultPath';
+import { getDeviceIds } from '../shared/device';
+import { PACKAGER_PUBLIC_KEY_B64 } from '../shared/keys/packagerPublicKey';
 
 type LicBody = {
   version: 1;

@@ -3,12 +3,12 @@
  * Durcissement sécuritaire avancé
  */
 
-import { app, session, BrowserWindow, WebContents } from 'electron';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { app, session, BrowserWindow } from 'electron';
+import type { BrowserWindow as BrowserWindowType, WebContents } from 'electron';
+import * as path from 'path';
+import * as url from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __filename et __dirname sont automatiquement disponibles en CommonJS
 
 export interface SandboxConfig {
   enableSandbox: boolean;
@@ -101,43 +101,43 @@ export function getSandboxWebPreferences(isDev: boolean = false): Electron.WebPr
   // Forcer configuration stricte si tests de sécurité en cours
   const isSecurityTest = process.argv.some(arg => arg.includes('test-security'));
   const config = (isSecurityTest || !isDev) ? STRICT_SANDBOX_CONFIG : DEV_SANDBOX_CONFIG;
-  
+
   return {
     // Sandbox principal
     sandbox: config.enableSandbox,
     nodeIntegration: config.enableNodeIntegration,
     contextIsolation: config.enableContextIsolation,
-    
+
     // Sécurité web
     webSecurity: config.webSecurity,
     allowRunningInsecureContent: config.allowRunningInsecureContent,
     experimentalFeatures: config.experimentalFeatures,
-    
+
     // Restrictions additionnelles
     nodeIntegrationInWorker: false,
     nodeIntegrationInSubFrames: false,
     safeDialogs: true,
     safeDialogsMessage: 'Cette application a été bloquée pour votre sécurité.',
-    
+
     // Preload sécurisé
-    preload: path.resolve(__dirname, 'preload.js'),
-    
+    preload: path.resolve(__dirname, 'preload.cjs'),
+
     // Désactiver fonctionnalités dangereuses
     plugins: false,
     javascript: true, // Nécessaire pour React
     images: true,
     textAreasAreResizable: false,
     webgl: false, // Pas de WebGL pour éviter les exploits GPU
-    
+
     // Désactiver l'accès aux APIs système
     backgroundThrottling: true,
     navigateOnDragDrop: false,
-    
+
     // Performance et sécurité
     v8CacheOptions: 'code', // Cache V8 pour performance
     disableBlinkFeatures: 'Auxclick', // Désactiver clics auxiliaires
     enableBlinkFeatures: '', // Aucune feature expérimentale
-    
+
     // Isolation processus
     partition: isDev ? 'persist:dev' : 'persist:main'
   };
@@ -152,13 +152,13 @@ export function setupPermissionRestrictions(): void {
   // Bloquer toutes les permissions dangereuses
   session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
     console.warn(`[PERMISSIONS] Demande bloquée: ${permission} de ${webContents.getURL()}`);
-    
+
     // Toujours refuser les permissions sensibles
     if (BLOCKED_PERMISSIONS.includes(permission)) {
       callback(false);
       return;
     }
-    
+
     // Autoriser seulement les permissions explicitement nécessaires
     const allowedPermissions = ['clipboard-read', 'clipboard-write'];
     callback(allowedPermissions.includes(permission));
@@ -183,21 +183,21 @@ export function setupNavigationRestrictions(): void {
   app.on('web-contents-created', (event, webContents) => {
     webContents.on('will-navigate', (navigationEvent, navigationUrl) => {
       const parsedUrl = new URL(navigationUrl);
-      
+
       // Autoriser seulement les protocoles sûrs
       if (!ALLOWED_PROTOCOLS.includes(parsedUrl.protocol)) {
         console.warn(`[NAVIGATION] Protocole bloqué: ${parsedUrl.protocol}`);
         navigationEvent.preventDefault();
         return;
       }
-      
+
       // Bloquer navigation vers localhost (sauf en dev)
       if (!app.isPackaged && BLOCKED_HOSTS.includes(parsedUrl.hostname)) {
         console.warn(`[NAVIGATION] Host bloqué: ${parsedUrl.hostname}`);
         navigationEvent.preventDefault();
         return;
       }
-      
+
       // Autoriser seulement navigation interne
       if (parsedUrl.protocol === 'https:' || parsedUrl.protocol === 'http:') {
         console.warn(`[NAVIGATION] Navigation externe bloquée: ${navigationUrl}`);
@@ -269,18 +269,18 @@ export function setupCodeInjectionProtection(): void {
               }
             });
           });
-          
+
           observer.observe(document.body, {
             childList: true,
             subtree: true
           });
-          
+
           // Bloquer eval et Function
           window.eval = function() {
             console.error('[INJECTION] eval() bloqué par protection');
             throw new Error('eval() is disabled for security');
           };
-          
+
           window.Function = function() {
             console.error('[INJECTION] Function() bloqué par protection');
             throw new Error('Function() is disabled for security');
@@ -302,14 +302,14 @@ export function setupProcessIsolation(): void {
   // Forcer isolation processus
   app.commandLine.appendSwitch('site-per-process');
   app.commandLine.appendSwitch('disable-site-isolation-trials');
-  
+
   // Désactiver processus partagés
   app.commandLine.appendSwitch('process-per-site');
-  
+
   // Sécurité mémoire
   app.commandLine.appendSwitch('enable-heap-profiling');
   app.commandLine.appendSwitch('max-old-space-size', '512'); // Limiter RAM
-  
+
   // Protection contre les exploits
   app.commandLine.appendSwitch('disable-background-timer-throttling');
   app.commandLine.appendSwitch('disable-renderer-backgrounding');
@@ -325,7 +325,7 @@ export function setupKioskProtection(window: BrowserWindow): void {
   // Désactiver raccourcis clavier système
   window.setMenuBarVisibility(false);
   window.setMenu(null);
-  
+
   // Bloquer raccourcis développeur
   window.webContents.on('before-input-event', (event, input) => {
     const blockedKeys = [
@@ -370,12 +370,12 @@ export function setupKioskProtection(window: BrowserWindow): void {
  */
 export function initializeSandboxSecurity(isDev: boolean = false): void {
   console.log(`[SANDBOX] Initialisation sécurité ${isDev ? 'DEV' : 'PRODUCTION'}`);
-  
+
   setupPermissionRestrictions();
   setupNavigationRestrictions();
   setupCodeInjectionProtection();
   setupProcessIsolation();
-  
+
   console.log('[SANDBOX] ✅ Toutes les protections activées');
 }
 
@@ -390,15 +390,15 @@ export function validateSandboxConfig(webContents: WebContents): boolean {
       console.warn('[SANDBOX] ⚠️ getWebPreferences() non disponible - validation ignorée');
       return true; // Considérer comme valide si on ne peut pas vérifier
     }
-    
+
     const prefs = getWebPreferences.call(webContents);
-    
+
     const validations = [
       { name: 'contextIsolation', value: prefs.contextIsolation, expected: true },
       { name: 'nodeIntegration', value: prefs.nodeIntegration, expected: false },
       { name: 'webSecurity', value: prefs.webSecurity, expected: true }
     ];
-    
+
     let isValid = true;
     validations.forEach(({ name, value, expected }) => {
       if (value !== expected) {
@@ -408,7 +408,7 @@ export function validateSandboxConfig(webContents: WebContents): boolean {
         console.log(`[SANDBOX] ✅ ${name}: ${value}`);
       }
     });
-    
+
     return isValid;
   } catch (error) {
     console.warn('[SANDBOX] ⚠️ Erreur validation sandbox:', error);

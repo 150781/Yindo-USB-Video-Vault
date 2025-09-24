@@ -1,14 +1,15 @@
 import path from 'path';
 import fs from 'fs';
 import fsp from 'fs/promises';
-import { protocol } from 'electron';
+import * as electron from 'electron';
+const { protocol } = electron;
 import { Readable } from 'stream';
 import crypto from 'crypto';
 import mime from 'mime-types';
-import { getVaultRoot } from './vaultPath.js';
-import { isLicenseLoaded, unwrapCEK } from './licenseSecure.js'; // Nouveau système
-import { getManifestEntries } from './manifest.js';
-import { createDecryptionStream, toWebStream, verifyEncryptedFile } from '../shared/crypto.js';
+import { getVaultRoot } from './vaultPath';
+import { isLicenseLoaded, unwrapCEK } from './licenseSecure'; // Nouveau système
+import { getManifestEntries } from './manifest';
+import { createDecryptionStream, toWebStream, verifyEncryptedFile } from '../shared/crypto';
 
 function toWeb(stream: Readable): ReadableStream {
   return toWebStream(stream);
@@ -19,13 +20,13 @@ async function decryptBufferOrStream(encPath: string, key: Buffer): Promise<{ is
   try {
     // Essayer d'abord de détecter le nouveau format GCM
     const password = process.env.VAULT_PASSWORD || 'default-vault-password'; // TODO: récupérer depuis vault manager
-    
+
     // Vérification rapide du nouveau format (magic header)
     const fd = await fsp.open(encPath, 'r');
     const magic = Buffer.alloc(4);
     await fd.read(magic, 0, 4, 0);
     await fd.close();
-    
+
     if (magic.toString() === 'UVV1') {
       console.log('[CRYPTO] Utilisation nouveau format GCM pour streaming');
       const stream = await createDecryptionStream(encPath, password);
@@ -45,9 +46,9 @@ async function decryptBufferOrStream(encPath: string, key: Buffer): Promise<{ is
 function decryptBufferLegacy(encPath: string, key: Buffer): Buffer {
   const bin = fs.readFileSync(encPath);
   if (bin.length < 12 + 16) throw new Error('enc too small');
-  const iv  = bin.subarray(0, 12);
+  const iv = bin.subarray(0, 12);
   const tag = bin.subarray(bin.length - 16);
-  const ct  = bin.subarray(12, bin.length - 16);
+  const ct = bin.subarray(12, bin.length - 16);
   const d = crypto.createDecipheriv('aes-256-gcm', key, iv);
   d.setAuthTag(tag);
   return Buffer.concat([d.update(ct), d.final()]);
@@ -122,16 +123,16 @@ export function setupVaultProtocol() {
 
       // Utiliser la nouvelle crypto GCM avec streaming
       const result = await decryptBufferOrStream(info.path, key);
-      
+
       if (result.isStream && result.stream) {
         console.log('[CRYPTO] Streaming GCM pour', id);
-        return new Response(toWeb(result.stream), { 
-          headers: { 'Content-Type': info.mime } 
+        return new Response(toWeb(result.stream), {
+          headers: { 'Content-Type': info.mime }
         });
       } else if (result.data) {
         console.log('[CRYPTO] Buffer legacy pour', id);
-        return new Response(new Uint8Array(result.data), { 
-          headers: { 'Content-Type': info.mime } 
+        return new Response(new Uint8Array(result.data), {
+          headers: { 'Content-Type': info.mime }
         });
       } else {
         throw new Error('Aucune donnée retournée par le déchiffreur');

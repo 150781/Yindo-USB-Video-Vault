@@ -1,16 +1,29 @@
 {
+  "extends": "./tsconfig.json",
   "compilerOptions": {
     "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
+    "module": "CommonJS",
+    "moduleResolution": "node",
     "outDir": "dist",
     "rootDir": "src",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
     "strict": true,
     "skipLibCheck": true,
     "sourceMap": true,
-    "types": ["node", "electron"],
-    "resolveJsonModule": true
+    "noEmit": false,
+    "types": [
+      "node",
+      "electron"
+    ]
   },
-  "include": ["src/main/**/*.ts", "src/main/**/*.d.ts", "src/types/**/*.d.ts", "src/shared/**/*.ts"],
-  "exclude": ["src/main/preload.ts"]
+  "include": [
+    "src/main/**/*.ts",
+    "src/main/**/*.d.ts",
+    "src/types/**/*.d.ts",
+    "src/shared/**/*.ts"
+  ],
+  "exclude": [
+    "src/main/preload.ts"
+  ]
 }

@@ -1,4 +1,5 @@
-import { app } from 'electron';
+import * as electron from 'electron';
+const { app } = electron;
 import path from 'path';
 import fs from 'fs';
 

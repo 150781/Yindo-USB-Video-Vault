@@ -3,7 +3,8 @@ import path from 'path';
 import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
-import { app } from 'electron';
+import * as electron from 'electron';
+const { app } = electron;
 
 export type CatalogEntry = {
   id: string;              // ID interne unique
@@ -30,16 +31,16 @@ function assetsMediaDirCandidates(): string[] {
 
 async function pickAssetsDir(): Promise<string | null> {
   for (const p of assetsMediaDirCandidates()) {
-    try { 
-      const s = await fsp.stat(p); 
-      if (s.isDirectory()) return p; 
-    } catch {}
+    try {
+      const s = await fsp.stat(p);
+      if (s.isDirectory()) return p;
+    } catch { }
   }
   return null;
 }
 
-function hash(s: string) { 
-  return crypto.createHash('sha1').update(s).digest('hex'); 
+function hash(s: string) {
+  return crypto.createHash('sha1').update(s).digest('hex');
 }
 
 function titleFromFile(name: string) {
@@ -75,13 +76,13 @@ export async function scanDevAssets(): Promise<CatalogEntry[]> {
 
   const files = await walk(root);
   console.log('[assets] Fichiers trouvés:', files.length);
-  
+
   const entries: CatalogEntry[] = [];
   for (const abs of files) {
     const rel = abs.substring(root.length + 1).replace(/\\/g, '/');
     const base = path.basename(abs);
     const id = `asset:${hash(rel)}`; // id stable
-    
+
     // sidecar meta optionnel: même nom + .meta.json
     let artist = undefined, year = undefined as any, genre = undefined as any;
     try {
@@ -91,8 +92,8 @@ export async function scanDevAssets(): Promise<CatalogEntry[]> {
       year = Number(meta.year) || year;
       genre = meta.genre || genre;
       console.log('[assets] Métadonnées trouvées pour', base, ':', meta);
-    } catch {}
-    
+    } catch { }
+
     const entry: CatalogEntry = {
       id,
       title: titleFromFile(base),
@@ -103,11 +104,11 @@ export async function scanDevAssets(): Promise<CatalogEntry[]> {
       source: 'asset',
       src: `asset://media/${encodeURIComponent(rel)}`,
     };
-    
+
     console.log('[assets] Entrée:', entry);
     entries.push(entry);
   }
-  
+
   console.log('[assets] Total entries:', entries.length);
   return entries;
 }

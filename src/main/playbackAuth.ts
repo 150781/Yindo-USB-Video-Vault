@@ -1,4 +1,4 @@
-import { getLicenseStatus, getRules } from './license.js';
+import { getLicenseStatus, getRules } from './license';
 
 export async function authorizeAndCount(mediaId: string): Promise<{ok:boolean; error?:string}> {
   const lic = getLicenseStatus();

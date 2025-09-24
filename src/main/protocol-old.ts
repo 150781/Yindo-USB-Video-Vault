@@ -1,11 +1,12 @@
-import { app, protocol } from 'electron';
+import * as electron from 'electron';
+const { app, protocol } = electron;
 import * as fs from 'fs';
 import * as fsp from 'fs/promises';
 import * as path from 'path';
 import * as stream from 'stream';
 import crypto from 'crypto';
-import { unwrapCEK } from './license.js';
-import { getVaultRoot, ensureVaultReadyOrThrow } from './vaultPath.js';
+import { unwrapCEK } from './license';
+import { getVaultRoot, ensureVaultReadyOrThrow } from './vaultPath';
 
 // Plaintext size = fileSize - 12 (IV) - 16 (TAG)
 function plaintextSize(fileSize: number) { return Math.max(fileSize - 28, 0); }
@@ -37,7 +38,7 @@ function parseRange(rangeHeader: string | undefined, totalSize: number) {
  * On bufferise les derniers 16 octets (TAG), qu'on passe à setAuthTag() en _flush().
  */
 class DecryptEncTransform extends stream.Transform {
-  private stage: 'iv'|'ct' = 'iv';
+  private stage: 'iv' | 'ct' = 'iv';
   private ivBuf = Buffer.alloc(0);
   private pending = Buffer.alloc(0); // buffer CT en conservant 16 octets de fin
   private decipher: crypto.DecipherGCM | null = null;
@@ -232,12 +233,12 @@ export function registerVaultProtocol() {
         }
 
         callback({ statusCode, headers, data: out });
-      } catch (e:any) {
+      } catch (e: any) {
         console.error('[vault] ERR', request.url, e);
         if (e?.code === 'ENOENT_VAULT') {
-          callback({ statusCode: 500, headers:{'Content-Type':'text/plain'}, data: Buffer.from(e.message) });
+          callback({ statusCode: 500, headers: { 'Content-Type': 'text/plain' }, data: Buffer.from(e.message) });
         } else {
-          callback({ statusCode: 500, headers:{'Content-Type':'text/plain'}, data: Buffer.from('Internal Error') });
+          callback({ statusCode: 500, headers: { 'Content-Type': 'text/plain' }, data: Buffer.from('Internal Error') });
         }
       }
     });

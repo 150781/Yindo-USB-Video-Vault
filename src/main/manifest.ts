@@ -3,10 +3,10 @@ import fs from 'fs';
 import fsp from 'fs/promises';
 import crypto from 'crypto';
 import nacl from 'tweetnacl';
-import { PACKAGER_PUBLIC_KEY_B64 } from '../shared/keys/packagerPublicKey.js';
-import { getManifestKey } from './license.js';
-import { getVaultRoot } from './vaultPath.js';
-import { scanDevAssets, CatalogEntry } from './devAssets.js';
+import { PACKAGER_PUBLIC_KEY_B64 } from '../shared/keys/packagerPublicKey';
+import { getManifestKey } from './license';
+import { getVaultRoot } from './vaultPath';
+import { scanDevAssets, CatalogEntry } from './devAssets';
 
 type MediaEntry = { id:string; title:string; artist?:string; durationSec?:number; sha256Enc:string };
 type Manifest = { version:number; media: MediaEntry[] };

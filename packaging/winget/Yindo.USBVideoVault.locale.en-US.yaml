@@ -1,0 +1,40 @@
+# Created using wingetcreate 1.6.1.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: Yindo.USBVideoVault
+PackageVersion: 0.1.4
+PackageLocale: en-US
+Publisher: Yindo
+PublisherUrl: https://github.com/150781
+PublisherSupportUrl: https://github.com/150781/Yindo-USB-Video-Vault/issues
+Author: Yindo
+PackageName: USB Video Vault
+PackageUrl: https://github.com/150781/Yindo-USB-Video-Vault
+License: Proprietary
+LicenseUrl: https://github.com/150781/Yindo-USB-Video-Vault/blob/master/LICENSE
+Copyright: Copyright (c) 2025 Yindo
+ShortDescription: Secure USB video vault application for professional media management
+Description: |-
+  USB Video Vault is a professional application for secure media management with advanced encryption,
+  licensing, and playback controls. Features include hardware-bound licensing, encrypted media storage,
+  playlist management, and enterprise-grade security controls.
+Moniker: usbvideovault
+Tags:
+- media
+- video
+- vault
+- security
+- encryption
+- usb
+- enterprise
+- drm
+ReleaseNotes: |-
+  - First production release with professional Windows installer
+  - New Yindo branding and icon integration
+  - Resolved critical "JavaScript error occurred in main process" 
+  - Code signing with Windows certificate for SmartScreen compatibility
+  - Both NSIS installer and portable versions available
+  - Comprehensive build pipeline with multi-platform support
+ReleaseNotesUrl: https://github.com/150781/Yindo-USB-Video-Vault/releases/tag/v0.1.4
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

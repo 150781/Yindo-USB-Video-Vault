@@ -1,6 +1,7 @@
-import { session } from 'electron';
+import * as electron from 'electron';
 import type { Session } from 'electron';
-import type { VaultManager } from './vault.js';
+const { session } = electron;
+import type { VaultManager } from './vault';
 
 export async function registerVaultProtocol(electronSession: Session, vault: VaultManager) {
   const proto = electronSession.protocol;
@@ -18,17 +19,19 @@ export async function registerVaultProtocol(electronSession: Session, vault: Vau
         const filePath = await vault.ensureDecryptedFile(id);
         const contentType = vault.getMimeById(id);
 
-        cb({ path: filePath, headers: {
-          'Content-Type': contentType,
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
-          'Pragma': 'no-cache'
-        }});
+        cb({
+          path: filePath, headers: {
+            'Content-Type': contentType,
+            'Cache-Control': 'no-store, no-cache, must-revalidate',
+            'Pragma': 'no-cache'
+          }
+        });
         return;
       }
 
       // Optionnel: GET /ping
       if (parts.length === 1 && parts[0] === 'ping') {
-        return cb({ data: Buffer.from('ok'), headers: { 'Content-Type': 'text/plain' }});
+        return cb({ data: Buffer.from('ok'), headers: { 'Content-Type': 'text/plain' } });
       }
 
       cb({ statusCode: 404, data: Buffer.from('Not found') });

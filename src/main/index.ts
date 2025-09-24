@@ -1,31 +1,29 @@
 
-// Import safe-console with proper ESM extension
-(async () => {
-  try {
-    await import('./safe-console.js');
-  } catch {
-    // si le fichier n'est pas là (dev), on ignore
-  }
-})();
+// Import safe-console with CommonJS
+try {
+  require('./safe-console');
+} catch {
+  // si le fichier n'est pas là (dev), on ignore
+}
 
 import { app, BrowserWindow, nativeTheme, protocol, session, powerMonitor, ipcMain } from 'electron';
-import path from 'path';
-import fs from 'fs';
-import { createControlWindow, getDisplayWindow } from './windows.js';
-import './ipc.js';
-import { VaultManager, resolveVaultPath } from './vault.js';
-import { getIdleTime } from './activity.js';
-import { isLicenseUnlocked, lockLicense } from './license.js';
-import { loadAndValidateLicense, lockLicense as lockSecureLicense, isLicenseLoaded } from './licenseSecure.js';
-import { StatsManager } from './stats.js';
-import { registerPlayerIPC } from './ipcPlayer.js';
-import './ipcQueue.js';
-import { registerMediaProtocols } from './mediaProtocols.js';
-import { registerSecurityIPC } from './ipcSecurity.js';
-import { registerStatsExtendedIPC } from './ipcStatsExtended.js';
-import { setupProductionCSP, setupDevelopmentCSP, setupCSPViolationLogging } from './csp.js';
-import { initializeSandboxSecurity } from './sandbox.js';
-import { initializeAntiDebugProtection } from './antiDebug.js';
+import * as path from 'path';
+import * as fs from 'fs';
+import { createControlWindow, getDisplayWindow } from './windows';
+import './ipc';
+import { VaultManager, resolveVaultPath } from './vault';
+import { getIdleTime } from './activity';
+import { isLicenseUnlocked, lockLicense } from './license';
+import { loadAndValidateLicense, lockLicense as lockSecureLicense, isLicenseLoaded } from './licenseSecure';
+import { StatsManager } from './stats';
+import { registerPlayerIPC } from './ipcPlayer';
+import './ipcQueue';
+import { registerMediaProtocols } from './mediaProtocols';
+import { registerSecurityIPC } from './ipcSecurity';
+import { registerStatsExtendedIPC } from './ipcStatsExtended';
+import { setupProductionCSP, setupDevelopmentCSP, setupCSPViolationLogging } from './csp';
+import { initializeSandboxSecurity } from './sandbox';
+import { initializeAntiDebugProtection } from './antiDebug';
 
 // 1) Single-instance lock
 const gotLock = app.requestSingleInstanceLock();
@@ -43,7 +41,7 @@ let idleTimer: NodeJS.Timeout | null = null;
 const IDLE_MS = Number(process.env.VAULT_IDLE_MS ?? 300_000); // 5min pour permettre les tests (au lieu de 30s)
 
 function broadcast(channel: string, payload?: any) {
-  BrowserWindow.getAllWindows().forEach(w => w.webContents.send(channel, payload));
+  BrowserWindow.getAllWindows().forEach((w: Electron.BrowserWindow) => w.webContents.send(channel, payload));
 }
 
 function armIdleTimer() {
@@ -72,20 +70,20 @@ async function lockVaultAndNotify(reason = 'idle') {
   try {
     console.log('[vault] LOCK reason =', reason);
     sessionLocked = true; // Mark session as locked
-    
+
     // Verrouiller les deux systèmes de licence
     lockLicense(); // Legacy
     lockSecureLicense(); // Nouveau système sécurisé
-    
+
     // Verrouiller le vault si disponible
     if (vaultManager) {
       await vaultManager.purgeCache();
       vaultManager.lock();
     }
-    
+
     // Verrouiller les stats
     if (statsManager) statsManager.lock();
-    
+
     // notifie toutes les fenêtres
     broadcast('session:locked', { reason });
     console.log('[vault] Verrouillage terminé');
@@ -99,7 +97,7 @@ if (!gotLock) {
 } else {
   app.on('second-instance', () => {
     const windows = BrowserWindow.getAllWindows();
-    const mainWindow = windows.find(w => w.getTitle().includes('Contrôle'));
+    const mainWindow = windows.find((w: Electron.BrowserWindow) => w.getTitle().includes('Contrôle'));
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
@@ -153,11 +151,11 @@ function setupTheme() {
 
 async function createApp() {
   setupTheme();
-  
+
   // Import et log du vault path
-  const { getVaultRoot } = await import('./vaultPath.js');
+  const { getVaultRoot } = await import('./vaultPath');
   console.log('[VAULT_PATH]', getVaultRoot());
-  
+
   await createControlWindow();
 }
 
@@ -171,11 +169,11 @@ app.whenReady().then(async () => {
   }
   setupCSPViolationLogging();
   console.log('[CSP] Content Security Policy configuré');
-  
+
   // Initialisation des protections sandbox
   initializeSandboxSecurity(isDev);
   console.log('[SANDBOX] Protections sandbox initialisées');
-  
+
   // Initialisation des protections anti-debug
   if (!isDev) {
     initializeAntiDebugProtection();
@@ -195,7 +193,7 @@ app.whenReady().then(async () => {
   } catch (err) {
     console.error('[vault] init failed:', err);
     console.error('[vault] Stack trace:', err instanceof Error ? err.stack : 'No stack');
-    
+
     // Ne pas abandonner complètement l'app pour les tests, mais loguer clairement
     console.warn('[vault] Continuité forcée pour les tests malgré échec init vault');
   }
@@ -205,9 +203,9 @@ app.whenReady().then(async () => {
   try {
     console.log('[LICENSE] Validation de la licence sécurisée...');
     const licenseResult = await loadAndValidateLicense(resolveVaultPath());
-    
+
     console.log('[LICENSE] Résultat validation:', licenseResult);
-    
+
     if (licenseResult.isValid) {
       console.log('[LICENSE] ✅ Licence sécurisée valide');
       if (licenseResult.data) {
@@ -216,7 +214,7 @@ app.whenReady().then(async () => {
       }
     } else {
       console.error('[LICENSE] ❌ Licence sécurisée invalide:', licenseResult.reason);
-      
+
       // En mode production, BLOQUER l'app si la licence est invalide
       if (!isDev) {
         console.error('[LICENSE] 🛑 Mode production - app bloquée pour licence invalide');
@@ -229,7 +227,7 @@ app.whenReady().then(async () => {
     }
   } catch (err) {
     console.error('[LICENSE] Erreur validation licence sécurisée:', err);
-    
+
     // En mode production, BLOQUER l'app en cas d'erreur de licence
     if (!isDev) {
       console.error('[LICENSE] 🛑 Mode production - app bloquée pour erreur de licence');
@@ -257,23 +255,23 @@ app.whenReady().then(async () => {
   registerMediaProtocols(vaultManager);
 
   // Configuration auto-lock
-  console.log(`[auto-lock] Configuration: IDLE_MS=${IDLE_MS}ms (${IDLE_MS/1000}s)`);
-  
+  console.log(`[auto-lock] Configuration: IDLE_MS=${IDLE_MS}ms (${IDLE_MS / 1000}s)`);
+
   // Enregistrement du module IPC Player idempotent
   registerPlayerIPC(() => getDisplayWindow());
   console.log('[main] IPC Player idempotent enregistré');
-  
+
   // Enregistrement des IPC de sécurité
   registerSecurityIPC();
   console.log('[main] IPC Security enregistré');
-  
+
   // Enregistrement des IPC stats étendus
   registerStatsExtendedIPC();
   console.log('[main] IPC Stats Extended enregistré');
-  
+
   // Note: IPC Queue & Stats est maintenant géré par le module './ipcQueue.js'
   console.log('[main] IPC Queue & Stats chargé via import');
-  
+
   // Start with session unlocked and timer armed
   sessionLocked = false;
   armIdleTimer();
@@ -283,7 +281,7 @@ app.whenReady().then(async () => {
   powerMonitor.on('lock-screen', () => lockVaultAndNotify('os-lock'));
 
   app.on('before-quit', async () => {
-    try { await vaultManager.purgeCache(); } catch {}
+    try { await vaultManager.purgeCache(); } catch { }
   });
 
   createApp();

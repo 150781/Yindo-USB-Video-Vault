@@ -10,7 +10,7 @@
 - **Interface utilisateur** cohérente avec la charte graphique
 
 ### 📦 **Distribution professionnelle**
-- **Installateur NSIS** (`USB Video Vault Setup 0.1.4.exe`) 
+- **Installateur NSIS** (`USB Video Vault Setup 0.1.4.exe`)
   - Installation/désinstallation propre
   - Support installation silencieuse (`/S`)
   - Entrées dans Programs & Features
@@ -98,6 +98,6 @@ Aucun problème bloquant identifié. Pour signaler un bug : [GitHub Issues](http
 
 ---
 
-**Téléchargements** : [Release GitHub](https://github.com/150781/Yindo-USB-Video-Vault/releases/tag/v0.1.4)  
-**Documentation** : [Wiki du projet](https://github.com/150781/Yindo-USB-Video-Vault/wiki)  
+**Téléchargements** : [Release GitHub](https://github.com/150781/Yindo-USB-Video-Vault/releases/tag/v0.1.4)
+**Documentation** : [Wiki du projet](https://github.com/150781/Yindo-USB-Video-Vault/wiki)
 **Support** : [Discussions GitHub](https://github.com/150781/Yindo-USB-Video-Vault/discussions)

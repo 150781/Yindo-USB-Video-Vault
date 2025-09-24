@@ -1,18 +1,19 @@
 import { promises as fs } from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { app } from 'electron';
+import * as electron from 'electron';
+const { app } = electron;
 import { createReadStream, createWriteStream } from 'fs';
 import { createDecipheriv, scryptSync, randomBytes, createCipheriv } from 'crypto';
-import { 
-  encryptMediaFile, 
-  createDecryptionStream, 
-  deriveKey, 
+import {
+  encryptMediaFile,
+  createDecryptionStream,
+  deriveKey,
   readEncryptionHeader,
   verifyEncryptedFile,
   MAGIC_HEADER,
   VERSION
-} from '../shared/crypto.js';
+} from '../shared/crypto';
 
 type SourceKind = 'asset' | 'vault';
 
@@ -72,23 +73,23 @@ export class VaultManager {
   async loadManifest() {
     if (!this.key) throw new Error('Vault verrouillé (clé absente). Appelle vault:unlock d\'abord.');
     const manPath = path.join(this.vaultPath, '.vault', 'manifest.bin');
-    
+
     try {
       // Essayer nouveau format GCM d'abord
       if (!this.password) throw new Error('Password requis pour nouveau format');
       const decryptedStream = await createDecryptionStream(manPath, this.password);
-      
+
       const chunks: Buffer[] = [];
       for await (const chunk of decryptedStream) {
         chunks.push(chunk);
       }
       const plain = Buffer.concat(chunks);
-      
+
       this.manifest = JSON.parse(plain.toString()) as ManifestJson;
       console.log('[CRYPTO] Manifest chargé avec nouveau format GCM');
     } catch (gcmError) {
       console.log('[CRYPTO] Tentative format GCM échoué, essai ancien format CBC...');
-      
+
       // Fallback ancien format CBC
       const enc = await fs.readFile(manPath);
       if (enc.length < 12 + 16) throw new Error('manifest.bin corrompu');
@@ -104,7 +105,7 @@ export class VaultManager {
       this.manifest = JSON.parse(plain.toString()) as ManifestJson;
       console.log('[CRYPTO] Manifest chargé avec ancien format CBC (compatibility)');
     }
-    
+
     this.byId.clear();
     for (const m of this.manifest.items) this.byId.set(m.id, m);
   }
@@ -131,12 +132,12 @@ export class VaultManager {
   /** Crée un stream de déchiffrement pour un média (nouvelle méthode streaming) */
   async createDecryptionStreamForMedia(id: string): Promise<NodeJS.ReadableStream> {
     if (!this.password) throw new Error('Vault verrouillé - password requis pour streaming');
-    
+
     const meta = this.byId.get(id);
     if (!meta) throw new Error(`Media inconnu: ${id}`);
 
     const inPath = path.join(this.vaultPath, 'media', `${id}.enc`);
-    
+
     try {
       // Vérifier que le fichier utilise le nouveau format
       await readEncryptionHeader(inPath);
@@ -150,7 +151,7 @@ export class VaultManager {
   /** Fallback pour ancien format (méthode privée) */
   private async createLegacyDecryptionStream(inPath: string): Promise<NodeJS.ReadableStream> {
     if (!this.key) throw new Error('Vault verrouillé');
-    
+
     const stat = await fs.stat(inPath);
     if (stat.size < 12 + 16) throw new Error('Fichier chiffré invalide');
 
@@ -184,29 +185,29 @@ export class VaultManager {
     try {
       await fs.access(outPath);
       return outPath;
-    } catch {}
+    } catch { }
 
     // Essayer nouveau format en premier
     const inPath = path.join(this.vaultPath, 'media', `${id}.enc`);
-    
+
     try {
       if (!this.password) throw new Error('Password requis pour nouveau format');
-      
+
       // Utiliser le streaming pour économiser la mémoire
       const decryptStream = await createDecryptionStream(inPath, this.password);
       const writeStream = createWriteStream(outPath);
-      
+
       await new Promise<void>((resolve, reject) => {
         decryptStream.pipe(writeStream)
           .on('finish', resolve)
           .on('error', reject);
       });
-      
+
       console.log('[CRYPTO] Fichier déchiffré avec nouveau format GCM:', outPath);
       return outPath;
     } catch (newFormatError) {
       console.log('[CRYPTO] Essai ancien format CBC pour', id);
-      
+
       // Fallback ancien format
       const stat = await fs.stat(inPath);
       if (stat.size < 12 + 16) throw new Error('Fichier chiffré invalide');
@@ -242,7 +243,7 @@ export class VaultManager {
   async cleanupTemp() {
     try {
       await fs.rm(this.tempDir, { recursive: true, force: true });
-    } catch {}
+    } catch { }
   }
 
   async purgeCache() {
@@ -270,7 +271,7 @@ export class VaultManager {
   /** Vérifier l'intégrité d'un média chiffré */
   async verifyMediaIntegrity(mediaId: string): Promise<boolean> {
     if (!this.password) return false;
-    
+
     const encPath = path.join(this.vaultPath, 'media', `${mediaId}.enc`);
     try {
       return await verifyEncryptedFile(encPath, this.password);

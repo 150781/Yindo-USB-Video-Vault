@@ -1,5 +1,5 @@
 import { BrowserWindow, ipcMain } from "electron";
-import { getDisplayWindow, createDisplayWindow } from "./windows.js";
+import { getDisplayWindow, createDisplayWindow } from './windows';
 
 console.log('[QUEUE_STATS] Module ipcQueueStats chargé - enregistrement des handlers...');
 

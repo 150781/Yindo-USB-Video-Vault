@@ -3,14 +3,16 @@
  * Protection contre capture d'écran, watermark, mode kiosque
  */
 
-import { BrowserWindow, screen, globalShortcut, systemPreferences } from 'electron';
-import { 
-  DisplaySecurity, 
-  PlayerSecurityState, 
-  SecurityViolation, 
+import * as electron from 'electron';
+import type { BrowserWindow } from 'electron';
+const { BrowserWindow: BrowserWindowImpl, screen, globalShortcut, systemPreferences } = electron;
+import {
+  DisplaySecurity,
+  PlayerSecurityState,
+  SecurityViolation,
   WatermarkConfig,
-  KioskModeConfig 
-} from '../types/security.js';
+  KioskModeConfig
+} from '../types/security';
 
 // Configuration par défaut de sécurité maximale
 const DEFAULT_SECURITY: DisplaySecurity = {
@@ -65,7 +67,7 @@ class PlayerSecurity {
    */
   async enableSecurity(window: BrowserWindow, config?: Partial<DisplaySecurity>): Promise<void> {
     console.log('[SECURITY] Activation du mode sécurisé...');
-    
+
     this.window = window;
     this.state.securityFeatures = { ...DEFAULT_SECURITY, ...config };
     this.state.isSecured = true;
@@ -96,7 +98,7 @@ class PlayerSecurity {
       this.startSecurityMonitoring();
 
       console.log('[SECURITY] ✅ Mode sécurisé activé');
-      
+
     } catch (error) {
       console.error('[SECURITY] ❌ Erreur activation sécurité:', error);
       this.addViolation('external_app', `Erreur activation sécurité: ${error}`, 'high', 'warn');
@@ -146,12 +148,12 @@ class PlayerSecurity {
     try {
       // Electron: setContentProtection (Windows/macOS)
       this.window.setContentProtection(true);
-      
+
       // Masquer la fenêtre dans les captures d'écran
       if (process.platform === 'win32') {
         // Windows: WDA_EXCLUDEFROMCAPTURE
         this.window.setSkipTaskbar(false); // Garder dans taskbar mais protéger
-        
+
         // Injecter du code natif pour WDA_EXCLUDEFROMCAPTURE si possible
         this.window.webContents.executeJavaScript(`
           // Protection côté renderer
@@ -170,10 +172,10 @@ class PlayerSecurity {
               return false;
             }
           });
-          
+
           // Protection contre right-click
           document.addEventListener('contextmenu', (e) => e.preventDefault());
-          
+
           // Protection contre sélection de texte
           document.addEventListener('selectstart', (e) => e.preventDefault());
         `);
@@ -192,7 +194,7 @@ class PlayerSecurity {
    */
   private async disableScreenCaptureProtection(): Promise<void> {
     if (!this.window) return;
-    
+
     try {
       this.window.setContentProtection(false);
       console.log('[SECURITY] ✅ Protection capture d\'écran désactivée');
@@ -206,19 +208,19 @@ class PlayerSecurity {
    */
   private async enableKioskMode(): Promise<void> {
     const config = DEFAULT_KIOSK;
-    
+
     try {
       // Désactiver les raccourcis globaux dangereux
       const shortcuts: string[] = [];
-      
+
       if (config.blockAltTab) {
         shortcuts.push('Alt+Tab', 'Alt+Shift+Tab');
       }
-      
+
       if (config.blockWinKey) {
         shortcuts.push('CommandOrControl+Escape', 'CommandOrControl+Shift+Escape');
       }
-      
+
       if (config.blockTaskManager) {
         shortcuts.push('Control+Shift+Escape', 'Control+Alt+Delete');
       }
@@ -291,7 +293,7 @@ class PlayerSecurity {
     if (!this.window) return;
 
     const config = this.state.securityFeatures.watermark;
-    
+
     try {
       // Injecter le watermark dans la page
       await this.window.webContents.executeJavaScript(`
@@ -304,7 +306,7 @@ class PlayerSecurity {
           const watermark = document.createElement('div');
           watermark.id = 'security-watermark';
           watermark.textContent = '${config.text}';
-          
+
           // Style du watermark
           Object.assign(watermark.style, {
             position: 'fixed',
@@ -346,7 +348,7 @@ class PlayerSecurity {
           }
 
           document.body.appendChild(watermark);
-          
+
           return 'Watermark ajouté';
         })();
       `);
@@ -387,7 +389,7 @@ class PlayerSecurity {
             devtools.open = true;
             console.warn('[SECURITY] DevTools détectés !');
           });
-          
+
           setInterval(() => {
             devtools.open = false;
             console.clear();
@@ -421,7 +423,7 @@ class PlayerSecurity {
               }
             });
           });
-          
+
           observer.observe(document, { childList: true, subtree: true });
 
           return 'Anti-debug activé';
@@ -441,7 +443,7 @@ class PlayerSecurity {
    */
   private async enableDisplayControl(): Promise<void> {
     const config = this.state.securityFeatures.displayControl;
-    
+
     try {
       // Surveiller les changements d'affichage
       screen.on('display-added', () => {
@@ -508,9 +510,9 @@ class PlayerSecurity {
    * Ajouter une violation de sécurité
    */
   private addViolation(
-    type: SecurityViolation['type'], 
-    message: string, 
-    severity: SecurityViolation['severity'], 
+    type: SecurityViolation['type'],
+    message: string,
+    severity: SecurityViolation['severity'],
     action: SecurityViolation['action']
   ): void {
     const violation: SecurityViolation = {
@@ -522,7 +524,7 @@ class PlayerSecurity {
     };
 
     this.state.violations.push(violation);
-    
+
     // Garder seulement les 100 dernières violations
     if (this.state.violations.length > 100) {
       this.state.violations = this.state.violations.slice(-100);
@@ -544,17 +546,17 @@ class PlayerSecurity {
       case 'warn':
         // Juste un log, pas d'action disruptive
         break;
-        
+
       case 'pause':
         // Pauser la lecture
         this.window.webContents.send('player:control', { action: 'pause' });
         break;
-        
+
       case 'stop':
         // Arrêter la lecture
         this.window.webContents.send('player:control', { action: 'stop' });
         break;
-        
+
       case 'close':
         // Fermer l'application (cas critique)
         if (violation.severity === 'critical') {
