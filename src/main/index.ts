@@ -1,5 +1,12 @@
 
-import './safe-console';
+// Import safe-console with proper ESM extension
+(async () => {
+  try {
+    await import('./safe-console.js');
+  } catch {
+    // si le fichier n'est pas là (dev), on ignore
+  }
+})();
 
 import { app, BrowserWindow, nativeTheme, protocol, session, powerMonitor, ipcMain } from 'electron';
 import path from 'path';
