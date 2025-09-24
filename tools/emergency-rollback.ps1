@@ -54,7 +54,7 @@ if (-not $DryRun -and $Execute) {
         gh release edit "v$FromVersion" --prerelease
         Write-Host "  OK v$FromVersion marquee en prerelease" -ForegroundColor Green
     } catch {
-        Write-Host "  ERREUR Depublication v$FromVersion: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  ERREUR Depublication v$FromVersion - $($_.Exception.Message)" -ForegroundColor Red
     }
 } else {
     Write-Host "  [SIMULATION] gh release edit v$FromVersion --prerelease" -ForegroundColor Gray
@@ -69,7 +69,7 @@ if (-not $DryRun -and $Execute) {
         gh release edit "v$ToVersion" --latest
         Write-Host "  OK v$ToVersion restauree comme latest" -ForegroundColor Green
     } catch {
-        Write-Host "  ERREUR Restauration v$ToVersion: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  ERREUR Restauration v$ToVersion - $($_.Exception.Message)" -ForegroundColor Red
     }
 } else {
     Write-Host "  [SIMULATION] gh release edit v$ToVersion --latest" -ForegroundColor Gray
@@ -85,7 +85,7 @@ $postMortemIssue = @"
 $Reason
 
 ## Actions prises
-- [x] v$FromVersion marquée en prerelease  
+- [x] v$FromVersion marquée en prerelease
 - [x] v$ToVersion restaurée comme latest
 - [ ] Investigation en cours
 - [ ] Fix prévu dans prochaine version
@@ -97,8 +97,8 @@ Si vous avez installé v$FromVersion, nous recommandons:
 3. Réinstaller la version stable
 
 ## Timeline
-$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") - Rollback initié
-$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") - Investigation en cours
+$((Get-Date).ToString("yyyy-MM-dd HH:mm:ss")) - Rollback initié
+$((Get-Date).ToString("yyyy-MM-dd HH:mm:ss")) - Investigation en cours
 
 ## Suivi
 Issue sera mise à jour avec post-mortem complet.
@@ -107,15 +107,15 @@ Issue sera mise à jour avec post-mortem complet.
 if (-not $DryRun -and $Execute) {
     Write-Host "  Creation issue post-mortem..." -ForegroundColor Blue
     try {
-        $issueTitle = "🚨 Emergency Rollback v$FromVersion - $Reason"
-        # gh issue create --title $issueTitle --body $postMortemIssue --label "critical,rollback"
+        $issueTitle = "Emergency Rollback v$FromVersion - $Reason"
+        gh issue create --title $issueTitle --body $postMortemIssue --label "critical,rollback"
         Write-Host "  OK Issue post-mortem creee" -ForegroundColor Green
     } catch {
-        Write-Host "  ERREUR Creation issue: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "  ERREUR Creation issue - $($_.Exception.Message)" -ForegroundColor Red
     }
 } else {
     Write-Host "  [SIMULATION] Creation issue post-mortem" -ForegroundColor Gray
-    Write-Host "  Titre: 🚨 Emergency Rollback v$FromVersion - $Reason" -ForegroundColor Gray
+    Write-Host "  Titre: Emergency Rollback v$FromVersion - $Reason" -ForegroundColor Gray
 }
 
 # ETAPE 5: Rollback distributions
@@ -159,8 +159,8 @@ $auditLog = @"
 # AUDIT POST-ROLLBACK v$FromVersion
 
 ## Timeline
-$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") - Rollback initie
-$(Get-Date -Format "yyyy-MM-dd HH:mm:ss") - Actions completees
+$((Get-Date).ToString("yyyy-MM-dd HH:mm:ss")) - Rollback initie
+$((Get-Date).ToString("yyyy-MM-dd HH:mm:ss")) - Actions completees
 
 ## Actions prises
 1. v$FromVersion depubliee (prerelease)
@@ -187,7 +187,7 @@ Investigation detaillee en cours.
 Prevention mesures a implementer.
 "@
 
-$auditFile = ".\logs\rollback-audit-v$FromVersion-$(Get-Date -Format 'yyyyMMdd-HHmm').md"
+$auditFile = ".\logs\rollback-audit-v$FromVersion-$((Get-Date).ToString('yyyyMMdd-HHmm')).md"
 if (-not $DryRun -and $Execute) {
     New-Item -ItemType Directory -Path ".\logs" -Force | Out-Null
     $auditLog | Out-File $auditFile -Encoding UTF8
