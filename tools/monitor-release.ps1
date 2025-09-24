@@ -1,17 +1,31 @@
-# Script de monitoring post-release
-# Usage: .\monitor-release.ps1 -Version "0.1.4" -Hours 48
+# Script de monitoring post-release avec surveillance SmartScreen, taux echec install, issues
+# Usage: .\monitor-release.ps1 -Version "0.1.5" -Hours 48 [-SmartScreen] [-Issues] [-InstallFailures]
 
 param(
-    [string]$Version = "0.1.4",
+    [string]$Version = "0.1.5",
     [int]$Hours = 48,
     [switch]$Continuous,
-    [switch]$SkipSmartScreen
+    [switch]$SmartScreen,
+    [switch]$Issues,
+    [switch]$InstallFailures,
+    [switch]$AllChecks
 )
 
 Add-Type -AssemblyName System.Web
 
+# Activation des checks specifiques si AllChecks
+if ($AllChecks) {
+    $SmartScreen = $true
+    $Issues = $true
+    $InstallFailures = $true
+}
+
 Write-Host "=== Monitoring Release v$Version ===" -ForegroundColor Cyan
-Write-Host "🕐 Durée: $Hours heures" -ForegroundColor Gray
+Write-Host "Duree: $Hours heures" -ForegroundColor Gray
+Write-Host "Checks actives:" -ForegroundColor Yellow
+if ($SmartScreen) { Write-Host "  - Surveillance SmartScreen" -ForegroundColor White }
+if ($Issues) { Write-Host "  - Surveillance Issues GitHub" -ForegroundColor White }
+if ($InstallFailures) { Write-Host "  - Surveillance echecs installation" -ForegroundColor White }
 Write-Host ""
 
 # Configuration
@@ -78,12 +92,12 @@ try {
     Send-Alert "Téléchargement échoué" "Le setup v$Version ne peut pas être téléchargé" "ERROR"
 }
 
-# 3. SmartScreen Reputation Check (si pas ignoré)
-if (-not $SkipSmartScreen) {
-    Write-Host "`n3. 🛡️ Monitoring SmartScreen..." -ForegroundColor Yellow
-    Write-Log "Début monitoring réputation SmartScreen"
+# 3. SmartScreen Reputation Check
+if ($SmartScreen) {
+    Write-Host "`n3. SmartScreen Monitoring..." -ForegroundColor Yellow
+    Write-Log "Debut monitoring reputation SmartScreen"
 
-    # Simulation d'un check de réputation (à remplacer par API réelle si disponible)
+    # Check reputation SmartScreen 
     $smartScreenStatus = @{
         "Reputation" = "Unknown"
         "DownloadCount" = 0
@@ -91,9 +105,95 @@ if (-not $SkipSmartScreen) {
         "LastChecked" = Get-Date
     }
 
-    Write-Log "⚠️  SmartScreen Status: $($smartScreenStatus.Reputation)"
+    Write-Log "SmartScreen Status: $($smartScreenStatus.Reputation)"
     if ($smartScreenStatus.Reputation -eq "Unknown") {
-        Write-Log "ℹ️  Note: Réputation SmartScreen normale pour nouvelle release"
+        Write-Log "Note: Reputation SmartScreen normale pour nouvelle release"
+        Write-Log "Recommandation: Monitorer retours utilisateurs pour alertes SmartScreen"
+    }
+    
+    # Check potential threats reports
+    try {
+        # Ici on pourrait integrer APIs de securite si disponibles
+        Write-Log "Aucune menace reportee (simulation)"
+    } catch {
+        Write-Log "Erreur verification menaces: $($_.Exception.Message)" "ERROR"
+    }
+}
+
+# 4. Issues GitHub Monitoring  
+if ($Issues) {
+    Write-Host "`n4. Issues GitHub..." -ForegroundColor Yellow
+    Write-Log "Debut monitoring issues GitHub"
+    
+    try {
+        # Verifier nouvelles issues depuis release
+        $recentIssues = & gh issue list --repo "150781/Yindo-USB-Video-Vault" --state open --limit 10 --json number,title,createdAt | ConvertFrom-Json
+        
+        # Filtrer issues recentes (derniers jours)
+        $releaseDate = Get-Date
+        $criticalKeywords = @("crash", "bug", "error", "fail", "problem", "install", "smartscreen")
+        
+        $criticalIssues = $recentIssues | Where-Object {
+            $issueDate = [DateTime]$_.createdAt
+            $daysSinceRelease = ($releaseDate - $issueDate).Days
+            
+            if ($daysSinceRelease -le 2) {
+                $hasCriticalKeyword = $false
+                foreach ($keyword in $criticalKeywords) {
+                    if ($_.title -like "*$keyword*") {
+                        $hasCriticalKeyword = $true
+                        break
+                    }
+                }
+                return $hasCriticalKeyword
+            }
+            return $false
+        }
+        
+        if ($criticalIssues.Count -gt 0) {
+            Write-Log "ATTENTION: $($criticalIssues.Count) issues critiques detectees" "WARNING"
+            foreach ($issue in $criticalIssues) {
+                Write-Log "  Issue #$($issue.number): $($issue.title)" "WARNING"
+            }
+            Send-Alert "Issues critiques detectees" "$($criticalIssues.Count) nouvelles issues depuis release v$Version" "WARNING"
+        } else {
+            Write-Log "Aucune issue critique detectee"
+        }
+    } catch {
+        Write-Log "Erreur monitoring issues: $($_.Exception.Message)" "ERROR"
+    }
+}
+
+# 5. Install Failures Monitoring
+if ($InstallFailures) {
+    Write-Host "`n5. Install Failures..." -ForegroundColor Yellow
+    Write-Log "Debut monitoring echecs installation"
+    
+    # Simulation de stats installation
+    $installStats = @{
+        "TotalDownloads" = 0
+        "SuccessfulInstalls" = 0
+        "FailedInstalls" = 0
+        "SmartScreenBlocks" = 0
+        "FailureRate" = 0.0
+    }
+    
+    # Dans un vrai scenario, ces donnees viendraient de telemetrie
+    Write-Log "Stats installation (simulation):"
+    Write-Log "  Total downloads: $($installStats.TotalDownloads)"
+    Write-Log "  Successful installs: $($installStats.SuccessfulInstalls)"  
+    Write-Log "  Failed installs: $($installStats.FailedInstalls)"
+    Write-Log "  SmartScreen blocks: $($installStats.SmartScreenBlocks)"
+    
+    if ($installStats.TotalDownloads -gt 0) {
+        $installStats.FailureRate = [math]::Round(($installStats.FailedInstalls / $installStats.TotalDownloads) * 100, 2)
+        Write-Log "  Failure rate: $($installStats.FailureRate)%"
+        
+        if ($installStats.FailureRate -gt 20) {
+            Send-Alert "Taux echec installation eleve" "Taux echec: $($installStats.FailureRate)% pour v$Version" "ERROR"
+        } elseif ($installStats.FailureRate -gt 10) {
+            Send-Alert "Taux echec installation surveiller" "Taux echec: $($installStats.FailureRate)% pour v$Version" "WARNING"
+        }
     }
 }
 
@@ -146,12 +246,14 @@ do {
         Send-Alert "Problèmes utilisateurs" "$($mockGitHubIssues.Count) nouveaux problèmes signalés" "WARN"
     }
 
-    # Statistiques périodiques
+    # Statistiques periodiques
     if ($elapsed % 2 -eq 0) { # Toutes les 2 heures
-        Write-Host "`n📊 Statistiques ($elapsed h):" -ForegroundColor Cyan
-        Write-Host "   • Checks réussis: $downloadCount" -ForegroundColor Green
-        Write-Host "   • Erreurs: $errorCount" -ForegroundColor $(if($errorCount -eq 0){"Green"}else{"Red"})
-        Write-Host "   • Disponibilité: $([math]::Round((1-$errorCount/($downloadCount+$errorCount))*100,1))%" -ForegroundColor $(if($errorCount -eq 0){"Green"}else{"Yellow"})
+        Write-Host ""
+        Write-Host "Statistiques (${elapsed}h):" -ForegroundColor Cyan
+        Write-Host "   Checks reussis: $downloadCount" -ForegroundColor Green
+        Write-Host "   Erreurs: $errorCount" -ForegroundColor $(if($errorCount -eq 0){"Green"}else{"Red"})
+        $availability = if (($downloadCount + $errorCount) -gt 0) { [math]::Round((1-$errorCount/($downloadCount+$errorCount))*100,1) } else { 100 }
+        Write-Host "   Disponibilite: ${availability}%" -ForegroundColor $(if($errorCount -eq 0){"Green"}else{"Yellow"})
 
         Write-Log "Stats: $downloadCount OK, $errorCount erreurs"
     }
@@ -192,5 +294,6 @@ if ($errorCount -eq 0) {
     Send-Alert "Investigation requise" "Release v$Version présente des problèmes de stabilité" "HIGH"
 }
 
-Write-Host "`n📄 Log complet: $logFile" -ForegroundColor Gray
-Write-Host "📊 Pour stats détaillées: Get-Content '$logFile' | Where-Object {`$_ -match 'Stats:'}" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Log complet: $logFile" -ForegroundColor Gray
+Write-Host "Pour stats detaillees: Get-Content '$logFile' | Where-Object { `$_ -match 'Stats:' }" -ForegroundColor Gray

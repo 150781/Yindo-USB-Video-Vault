@@ -1,12 +1,15 @@
 # Script de rollback d'urgence
-# Usage: .\emergency-rollback.ps1 -FromVersion "0.1.5" -ToVersion "0.1.4" -Reason "Critical bug"
+# Usage: .\emergency-rollback.ps1 -FromVersion "0.1.5" -ToVersion "0.1.4" [-WhatIf] [-Execute]
+# -WhatIf: simulation sans execution (test a blanc)
+# -Execute: execution reelle du rollback
 
 param(
   [string]$FromVersion,
   [string]$ToVersion = "0.1.4",
   [string]$Reason = "Critical issue",
   [switch]$Execute,
-  [switch]$DryRun
+  [switch]$DryRun,
+  [switch]$WhatIf
 )
 
 Write-Host "=== ROLLBACK D'URGENCE ===" -ForegroundColor Red
@@ -14,14 +17,22 @@ Write-Host "FROM: v$FromVersion → TO: v$ToVersion" -ForegroundColor Yellow
 Write-Host "RAISON: $Reason" -ForegroundColor Yellow
 Write-Host ""
 
-if (-not $Execute -and -not $DryRun) {
+# Gestion des modes d'execution
+$IsSimulation = $DryRun -or $WhatIf
+$IsExecution = $Execute
+
+if (-not $IsExecution -and -not $IsSimulation) {
   Write-Host "ATTENTION: Rollback d'urgence!" -ForegroundColor Red
-  Write-Host "Ajouter -Execute pour confirmer ou -DryRun pour simuler" -ForegroundColor Yellow
+  Write-Host "Modes disponibles:" -ForegroundColor Yellow
+  Write-Host "  -WhatIf  : Test a blanc (recommande)" -ForegroundColor White
+  Write-Host "  -DryRun  : Simulation detaillee" -ForegroundColor White  
+  Write-Host "  -Execute : Execution reelle (DANGER!)" -ForegroundColor Red
   exit 1
 }
 
-if ($DryRun) {
-  Write-Host "MODE DRY-RUN - Simulation uniquement" -ForegroundColor Blue
+if ($IsSimulation) {
+  $simulationMode = if ($WhatIf) { "WHAT-IF" } else { "DRY-RUN" }
+  Write-Host "MODE $simulationMode - Simulation uniquement" -ForegroundColor Blue
   Write-Host ""
 }
 
@@ -50,7 +61,7 @@ if (Get-Command gh -ErrorAction SilentlyContinue) {
 # ETAPE 2: Depublier version defaillante
 Write-Host "`n2. Depublication v$FromVersion..." -ForegroundColor Yellow
 
-if (-not $DryRun -and $Execute) {
+if ($IsExecution) {
   Write-Host "  Marquage en prerelease..." -ForegroundColor Blue
   try {
     gh release edit "v$FromVersion" --prerelease

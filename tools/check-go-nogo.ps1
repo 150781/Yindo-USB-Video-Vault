@@ -23,17 +23,45 @@ $certCheck = @{
     Critical = $true
 }
 
-# Verifier secrets GitHub
-try {
-    # Note: En production, verifier via API GitHub si possible
-    $certCheck.Details += "Verifier manuellement GitHub Secrets:"
+# Verifier signature existante si setup disponible
+$setupFile = ".\dist\USB Video Vault Setup $Version.exe"
+if (Test-Path $setupFile) {
+    try {
+        $signtoolPath = Get-Command signtool -ErrorAction SilentlyContinue
+        if ($signtoolPath) {
+            $signtoolOutput = & signtool verify /pa /v $setupFile 2>&1
+            $signatureValid = $LASTEXITCODE -eq 0
+            
+            if ($signatureValid) {
+                $certCheck.Status = "OK"
+                $certCheck.Details += "Signature Authenticode valide sur $setupFile"
+                if ($signtoolOutput -match "timestamp") {
+                    $certCheck.Details += "Horodatage present"
+                } else {
+                    $certCheck.Details += "ATTENTION: Horodatage manquant"
+                }
+            } else {
+                $certCheck.Status = "FAILED"
+                $certCheck.Details += "Signature invalide ou manquante sur $setupFile"
+            }
+        } else {
+            $certCheck.Status = "MANUAL_CHECK"
+            $certCheck.Details += "signtool non disponible - verification manuelle requise"
+            $certCheck.Details += "Verifier manuellement GitHub Secrets:"
+            $certCheck.Details += "  - WINDOWS_CERT_BASE64 (certificat .pfx en base64)"  
+            $certCheck.Details += "  - WINDOWS_CERT_PASSWORD (mot de passe certificat)"
+        }
+    } catch {
+        $certCheck.Status = "ERROR"
+        $certCheck.Details += "Erreur verification signature: $($_.Exception.Message)"
+    }
+} else {
+    $certCheck.Status = "MANUAL_CHECK"
+    $certCheck.Details += "Setup file manquant - build requis"
+    $certCheck.Details += "Verifier GitHub Secrets avant build final:"
     $certCheck.Details += "  - WINDOWS_CERT_BASE64 (certificat .pfx en base64)"  
     $certCheck.Details += "  - WINDOWS_CERT_PASSWORD (mot de passe certificat)"
     $certCheck.Details += "  - GITHUB_TOKEN (pour releases)"
-    $certCheck.Status = "MANUAL_CHECK"
-} catch {
-    $certCheck.Status = "ERROR"
-    $certCheck.Details += "Erreur verification secrets: $($_.Exception.Message)"
 }
 
 $checks += $certCheck
