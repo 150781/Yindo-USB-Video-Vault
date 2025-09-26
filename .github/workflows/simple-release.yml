@@ -1,0 +1,148 @@
+# GitHub Actions Workflow - USB Video Vault (Simple Release)
+name: "Simple Release Pipeline"
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g., v0.1.5)"
+        required: true
+        default: "v0.1.5"
+
+env:
+  NODE_VERSION: "18"
+
+jobs:
+  # ===== BUILD PHASE =====
+  build-windows:
+    name: "Build Windows (Unsigned)"
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+
+      - name: "Install and Build"
+        shell: pwsh
+        run: |
+          npm ci
+          npm run build
+          npm run build:main
+          npm run electron:build
+
+      - name: "Generate SHA256SUMS"
+        shell: pwsh
+        run: |
+          # Generate SHA256 for all EXE files
+          $hashLines = (Get-ChildItem "dist" -Filter "*.exe" | ForEach-Object {
+            $h = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "$h  $($_.Name)"
+          })
+          $hashLines -join "`n" | Out-File -Encoding ascii "dist/SHA256SUMS"
+          
+          Write-Host "=== SHA256SUMS Generated ==="
+          Get-Content "dist/SHA256SUMS"
+
+      - name: "Create Release Notes"
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace "^v", ""
+          $releaseNotes = @"
+          # USB Video Vault ${{ github.ref_name }}
+          
+          ## 📥 Installation
+          - **Setup (recommandé)** : ``USB Video Vault Setup $version.exe``
+          - **Version portable** : ``USB Video Vault $version.exe``
+          
+          ## ⚠️ Note Windows SmartScreen
+          Si Windows affiche un avertissement, cliquez sur "**Informations complémentaires**" puis "**Exécuter quand même**".
+          
+          ## 🔒 Vérification d'intégrité
+          Voir le fichier ``SHA256SUMS`` pour les hachages de vérification.
+          
+          ## 🎉 Fonctionnalités
+          - Lecteur vidéo sécurisé avec chiffrement
+          - Interface moderne et intuitive
+          - Support de multiples formats vidéo
+          - Gestion des playlists
+          
+          ## 📞 Support
+          Pour toute question, ouvrez une issue sur ce repository.
+          
+          ---
+          **Version :** $version • **Windows x64** • **$(Get-Date -Format 'dd/MM/yyyy')**
+          "@
+          
+          $releaseNotes | Out-File -Encoding UTF8 "dist/RELEASE_NOTES.md"
+
+      - name: "Upload Windows Artifacts"
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: |
+            dist/*.exe
+            dist/SHA256SUMS
+            dist/RELEASE_NOTES.md
+
+  # ===== RELEASE PHASE =====
+  create-release:
+    name: "Create GitHub Release"
+    runs-on: ubuntu-latest
+    needs: [build-windows]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Download Windows Artifacts"
+        uses: actions/download-artifact@v4
+        with:
+          name: windows-release
+          path: release-assets
+
+      - name: "Extract Version"
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: "Create Release"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: "USB Video Vault ${{ steps.version.outputs.VERSION }}"
+          body_path: release-assets/RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+          files: |
+            release-assets/*.exe
+            release-assets/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ===== NOTIFICATION PHASE =====
+  notify-success:
+    name: "Notify Success"
+    runs-on: ubuntu-latest
+    needs: [create-release]
+    if: success()
+    steps:
+      - name: "Success Message"
+        run: |
+          echo "🎉 Release ${{ github.ref_name }} created successfully!"
+          echo "📁 Windows executables uploaded and ready"
+          echo "🔐 SHA256 checksums included"
+          echo "📄 Release notes generated"
+
+  notify-failure:
+    name: "Notify Failure"
+    runs-on: ubuntu-latest
+    needs: [build-windows, create-release]
+    if: failure()
+    steps:
+      - name: "Failure Message"
+        run: |
+          echo "❌ Release pipeline failed for ${{ github.ref_name }}"
+          echo "🔍 Check the logs for details"
