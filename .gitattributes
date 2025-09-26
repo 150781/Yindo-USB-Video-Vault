@@ -1,0 +1,22 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Force Unix line endings for checksum files
+SHA256SUMS text eol=lf
+*.sha256 text eol=lf
+
+# Windows scripts
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Unix scripts  
+*.sh text eol=lf
+
+# Binary files
+*.exe binary
+*.dll binary
+*.pfx binary
+*.p12 binary
+*.dmg binary
+*.AppImage binary

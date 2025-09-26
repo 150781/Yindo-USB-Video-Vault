@@ -72,8 +72,7 @@ jobs:
           npm run electron:build
 
       - name: "🖊️ Code Signing (Windows)"
-        # Garder un if simple évite l'erreur VS Code
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && secrets.WINDOWS_CERT_BASE64 && secrets.WINDOWS_CERT_PASSWORD }}
         shell: pwsh
         env:
           WINDOWS_CERT_BASE64: ${{ secrets.WINDOWS_CERT_BASE64 }}
