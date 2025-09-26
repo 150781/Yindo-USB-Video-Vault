@@ -64,7 +64,7 @@ $sha256Issues = @()
 
 if (Test-Path $setupFile) {
     $actualSha256 = (Get-FileHash $setupFile -Algorithm SHA256).Hash
-    
+
     # Verifier SHA256SUMS
     if (Test-Path $sha256File) {
         $sha256Content = Get-Content $sha256File -Raw
@@ -77,7 +77,7 @@ if (Test-Path $setupFile) {
     } else {
         $sha256Issues += "SHA256SUMS manquant"
     }
-    
+
     # Verifier manifests
     $wingetInstaller = ".\packaging\winget\installer.yaml"
     if (Test-Path $wingetInstaller) {
@@ -106,22 +106,33 @@ $checks++
 
 if (Test-Path $setupFile) {
     try {
-        # Test signature avec signtool
-        $signtoolOutput = & signtool verify /pa /v $setupFile 2>&1
+        # Test signature robuste avec signtool + PowerShell
+        $signtoolOutput = & signtool verify /pa /kp /d /v $setupFile 2>&1
         $signatureValid = $LASTEXITCODE -eq 0
-        
-        if ($signatureValid) {
-            # Verifier horodatage
-            if ($signtoolOutput -match "timestamp") {
-                Write-Host "   [OK] Signature valide avec horodatage" -ForegroundColor Green
+        $psSignature = Get-AuthenticodeSignature $setupFile -ErrorAction SilentlyContinue
+
+        if ($signatureValid -and $psSignature -and $psSignature.Status -eq "Valid") {
+            # Verifier horodatage (critique pour longevite)
+            if ($signtoolOutput -match "timestamp" -or $psSignature.TimeStamperCertificate) {
+                Write-Host "   [OK] Signature + horodatage valides" -ForegroundColor Green
+                Write-Host "     Certificat: $($psSignature.SignerCertificate.Subject.Split(',')[0])" -ForegroundColor Gray
                 $passed++
             } else {
-                Write-Host "   [WARNING] Signature valide mais horodatage manquant" -ForegroundColor Yellow
-                $warnings += "Horodatage manquant dans signature"
-                $passed++
+                Write-Host "   [FAILED] Signature valide MAIS horodatage manquant" -ForegroundColor Red
+                $issues += "Horodatage manquant - signature expirera avec certificat"
+            }
+
+            # Verifier expiration certificat proche
+            $now = Get-Date
+            if ($psSignature.SignerCertificate.NotAfter -lt $now.AddDays(30)) {
+                Write-Host "   [WARNING] Certificat expire en moins de 30 jours" -ForegroundColor Yellow
+                $warnings += "Certificat expire bientot: $($psSignature.SignerCertificate.NotAfter)"
             }
         } else {
             Write-Host "   [FAILED] Signature invalide ou manquante" -ForegroundColor Red
+            if ($psSignature) {
+                Write-Host "     Raison: $($psSignature.StatusMessage)" -ForegroundColor White
+            }
             $issues += "Signature Authenticode invalide"
         }
     } catch {

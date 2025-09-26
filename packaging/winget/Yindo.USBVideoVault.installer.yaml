@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
 
 PackageIdentifier: Yindo.USBVideoVault
-PackageVersion: 0.1.4
+PackageVersion: 0.1.5
 Platform:
 - Windows.Desktop
 MinimumOSVersion: 10.0.19041.0
@@ -13,6 +13,7 @@ InstallModes:
 - silent
 - silentWithProgress
 UpgradeBehavior: install
+ElevationRequirement: elevationRequired
 ReleaseDate: 2025-09-24
 Installers:
 - Architecture: x64

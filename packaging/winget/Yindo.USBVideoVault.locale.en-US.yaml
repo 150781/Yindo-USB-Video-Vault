@@ -2,7 +2,7 @@
 # yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
 
 PackageIdentifier: Yindo.USBVideoVault
-PackageVersion: 0.1.4
+PackageVersion: 0.1.5
 PackageLocale: en-US
 Publisher: Yindo
 PublisherUrl: https://github.com/150781
@@ -13,6 +13,7 @@ PackageUrl: https://github.com/150781/Yindo-USB-Video-Vault
 License: Proprietary
 LicenseUrl: https://github.com/150781/Yindo-USB-Video-Vault/blob/master/LICENSE
 Copyright: Copyright (c) 2025 Yindo
+ReleaseNotesUrl: https://github.com/150781/Yindo-USB-Video-Vault/releases/tag/v0.1.4
 ShortDescription: Secure USB video vault application for professional media management
 Description: |-
   USB Video Vault is a professional application for secure media management with advanced encryption,

@@ -29,26 +29,49 @@ if (Test-Path $setupFile) {
     try {
         $signtoolPath = Get-Command signtool -ErrorAction SilentlyContinue
         if ($signtoolPath) {
-            $signtoolOutput = & signtool verify /pa /v $setupFile 2>&1
+            # Verification robuste avec signtool (Local + Kernel policies)
+            Write-Host "    Verification signtool robuste..." -ForegroundColor Gray
+            $signtoolOutput = & signtool verify /pa /kp /d /v $setupFile 2>&1
             $signatureValid = $LASTEXITCODE -eq 0
-            
-            if ($signatureValid) {
+
+            # Verification complementaire PowerShell
+            $psSignature = Get-AuthenticodeSignature $setupFile -ErrorAction SilentlyContinue
+
+            if ($signatureValid -and $psSignature -and $psSignature.Status -eq "Valid") {
                 $certCheck.Status = "OK"
-                $certCheck.Details += "Signature Authenticode valide sur $setupFile"
-                if ($signtoolOutput -match "timestamp") {
-                    $certCheck.Details += "Horodatage present"
+                $certCheck.Details += "Signature Authenticode valide (signtool + PowerShell)"
+                $certCheck.Details += "Certificat: $($psSignature.SignerCertificate.Subject)"
+                $certCheck.Details += "Emetteur: $($psSignature.SignerCertificate.Issuer)"
+
+                # Verification horodatage
+                if ($signtoolOutput -match "timestamp" -or $psSignature.TimeStamperCertificate) {
+                    $certCheck.Details += "Horodatage present et valide"
+                    if ($psSignature.TimeStamperCertificate) {
+                        $certCheck.Details += "TSA: $($psSignature.TimeStamperCertificate.Subject)"
+                    }
                 } else {
-                    $certCheck.Details += "ATTENTION: Horodatage manquant"
+                    $certCheck.Status = "FAILED"
+                    $certCheck.Details += "CRITIQUE: Horodatage manquant - signature expirera avec certificat"
+                }
+
+                # Verification validite certificat
+                $now = Get-Date
+                if ($psSignature.SignerCertificate.NotAfter -lt $now.AddDays(30)) {
+                    $certCheck.Details += "ATTENTION: Certificat expire dans moins de 30 jours"
                 }
             } else {
                 $certCheck.Status = "FAILED"
                 $certCheck.Details += "Signature invalide ou manquante sur $setupFile"
+                if ($psSignature) {
+                    $certCheck.Details += "Status PowerShell: $($psSignature.Status)"
+                    $certCheck.Details += "Raison: $($psSignature.StatusMessage)"
+                }
             }
         } else {
             $certCheck.Status = "MANUAL_CHECK"
             $certCheck.Details += "signtool non disponible - verification manuelle requise"
             $certCheck.Details += "Verifier manuellement GitHub Secrets:"
-            $certCheck.Details += "  - WINDOWS_CERT_BASE64 (certificat .pfx en base64)"  
+            $certCheck.Details += "  - WINDOWS_CERT_BASE64 (certificat .pfx en base64)"
             $certCheck.Details += "  - WINDOWS_CERT_PASSWORD (mot de passe certificat)"
         }
     } catch {
@@ -59,7 +82,7 @@ if (Test-Path $setupFile) {
     $certCheck.Status = "MANUAL_CHECK"
     $certCheck.Details += "Setup file manquant - build requis"
     $certCheck.Details += "Verifier GitHub Secrets avant build final:"
-    $certCheck.Details += "  - WINDOWS_CERT_BASE64 (certificat .pfx en base64)"  
+    $certCheck.Details += "  - WINDOWS_CERT_BASE64 (certificat .pfx en base64)"
     $certCheck.Details += "  - WINDOWS_CERT_PASSWORD (mot de passe certificat)"
     $certCheck.Details += "  - GITHUB_TOKEN (pour releases)"
 }
@@ -71,7 +94,7 @@ Write-Host "2. 🔨 Build local..." -ForegroundColor Yellow
 
 $buildCheck = @{
     Name = "Build local"
-    Status = "UNKNOWN"  
+    Status = "UNKNOWN"
     Details = @()
     Critical = $true
 }
@@ -92,7 +115,7 @@ foreach ($file in $buildFiles) {
 if ($missingFiles.Count -eq 0) {
     $buildCheck.Status = "OK"
     $buildCheck.Details += "Tous les artefacts build présents"
-    
+
     # Verifier tailles
     foreach ($file in $buildFiles) {
         $size = [math]::Round((Get-Item $file).Length / 1MB, 1)
@@ -122,7 +145,7 @@ if (Test-Path ".\tools\final-vm-tests.ps1") {
     $smokeCheck.Details += "Script VM tests disponible"
     $smokeCheck.Details += "Executer: .\tools\final-vm-tests.ps1 -SetupPath '.\dist\USB Video Vault Setup $Version.exe' -Automated"
 } else {
-    $smokeCheck.Status = "SCRIPT_MISSING" 
+    $smokeCheck.Status = "SCRIPT_MISSING"
     $smokeCheck.Details += "Script final-vm-tests.ps1 manquant"
 }
 
@@ -142,7 +165,7 @@ $manifestCheck = @{
 $wingetManifest = ".\packaging\winget\Yindo.USBVideoVault.yaml"
 if (Test-Path $wingetManifest) {
     $manifestCheck.Details += "✅ Winget manifest présent"
-    
+
     # Verifier contenu
     $wingetContent = Get-Content $wingetManifest -Raw
     if ($wingetContent -match "PackageVersion:\s*$([regex]::Escape($Version))") {
@@ -151,7 +174,7 @@ if (Test-Path $wingetManifest) {
         $manifestCheck.Details += "⚠️ Version Winget à mettre à jour"
         $issues += "Mettre à jour PackageVersion dans $wingetManifest"
     }
-    
+
     # Verifier URL/SHA256 placeholder
     if ($wingetContent -match "InstallerUrl:.*github.*releases.*download") {
         $manifestCheck.Details += "✅ URL Winget correcte (direct download)"
@@ -168,7 +191,7 @@ if (Test-Path $wingetManifest) {
 $chocoSpec = ".\packaging\chocolatey\usbvideovault.nuspec"
 if (Test-Path $chocoSpec) {
     $manifestCheck.Details += "✅ Chocolatey nuspec présent"
-    
+
     $chocoContent = Get-Content $chocoSpec -Raw
     if ($chocoContent -match "<version>$([regex]::Escape($Version))</version>") {
         $manifestCheck.Details += "✅ Version Chocolatey correcte: $Version"
@@ -234,7 +257,7 @@ $warnings = 0
 foreach ($check in $checks) {
     $icon = "?"
     $color = "Gray"
-    
+
     switch ($check.Status) {
         "OK" { $icon = "[OK]"; $color = "Green" }
         "MANUAL_CHECK" { $icon = "[MANUAL]"; $color = "Yellow" }
@@ -243,15 +266,15 @@ foreach ($check in $checks) {
         "FAILED" { $icon = "[FAILED]"; $color = "Red" }
         "INCOMPLETE" { $icon = "[INCOMPLETE]"; $color = "Yellow" }
     }
-    
+
     Write-Host "$icon $($check.Name): $($check.Status)" -ForegroundColor $color
-    
+
     if ($Detailed) {
         foreach ($detail in $check.Details) {
             Write-Host "    $detail" -ForegroundColor Gray
         }
     }
-    
+
     if ($check.Critical -and ($check.Status -eq "FAILED" -or $check.Status -eq "ISSUES")) {
         $criticalFailed++
     } elseif ($check.Status -like "*MANUAL*" -or $check.Status -like "*WARNING*" -or $check.Status -eq "INCOMPLETE") {
@@ -265,7 +288,7 @@ Write-Host "`n=== DÉCISION ===" -ForegroundColor Cyan
 if ($criticalFailed -eq 0) {
     Write-Host "🚀 GO - Déploiement autorisé" -ForegroundColor Green
     Write-Host "Critiques: $criticalFailed | Warnings: $warnings" -ForegroundColor Green
-    
+
     if ($warnings -gt 0) {
         Write-Host "⚠️ Actions manuelles requises avant déploiement:" -ForegroundColor Yellow
         Write-Host "  1. Vérifier certificat Authenticode dans GitHub Secrets" -ForegroundColor White
@@ -283,18 +306,18 @@ if ($issues.Count -gt 0) {
     for ($i = 0; $i -lt $issues.Count; $i++) {
         Write-Host "$($i+1). $($issues[$i])" -ForegroundColor White
     }
-    
+
     if ($FixIssues) {
         Write-Host ""
         Write-Host "Tentative correction automatique..." -ForegroundColor Yellow
-        
+
         # Correction build si necessaire
         if ($issues -contains "Executer: npm run clean et npm run build et npm run electron:build") {
             Write-Host "  Lancement build..." -ForegroundColor Blue
             & npm run clean
-            & npm run build  
+            & npm run build
             & npm run electron:build
-            
+
             if ($LASTEXITCODE -eq 0) {
                 Write-Host "  Build corrige" -ForegroundColor Green
             } else {
@@ -309,7 +332,7 @@ Write-Host ""
 Write-Host "=== CHECKLIST DEPLOIEMENT ===" -ForegroundColor Blue
 Write-Host "Avant de proceder au deploiement:" -ForegroundColor White
 Write-Host "  [ ] Certificat EV/OV configure dans GitHub Secrets" -ForegroundColor White
-Write-Host "  [ ] Build local reussi sans erreurs" -ForegroundColor White  
+Write-Host "  [ ] Build local reussi sans erreurs" -ForegroundColor White
 Write-Host "  [ ] Tests smoke VM reussis" -ForegroundColor White
 Write-Host "  [ ] Manifests Winget/Chocolatey a jour" -ForegroundColor White
 Write-Host "  [ ] Documentation utilisateur complete" -ForegroundColor White

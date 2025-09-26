@@ -44,7 +44,7 @@ jobs:
             "$h  $($_.Name)"
           })
           $hashLines -join "`n" | Out-File -Encoding ascii "dist/SHA256SUMS"
-          
+
           Write-Host "=== SHA256SUMS Generated ==="
           Get-Content "dist/SHA256SUMS"
 
@@ -54,30 +54,30 @@ jobs:
           $version = "${{ github.ref_name }}" -replace "^v", ""
           $releaseNotes = @"
           # USB Video Vault ${{ github.ref_name }}
-          
+
           ## 📥 Installation
           - **Setup (recommandé)** : ``USB Video Vault Setup $version.exe``
           - **Version portable** : ``USB Video Vault $version.exe``
-          
+
           ## ⚠️ Note Windows SmartScreen
           Si Windows affiche un avertissement, cliquez sur "**Informations complémentaires**" puis "**Exécuter quand même**".
-          
+
           ## 🔒 Vérification d'intégrité
           Voir le fichier ``SHA256SUMS`` pour les hachages de vérification.
-          
+
           ## 🎉 Fonctionnalités
           - Lecteur vidéo sécurisé avec chiffrement
           - Interface moderne et intuitive
           - Support de multiples formats vidéo
           - Gestion des playlists
-          
+
           ## 📞 Support
           Pour toute question, ouvrez une issue sur ce repository.
-          
+
           ---
           **Version :** $version • **Windows x64** • **$(Get-Date -Format 'dd/MM/yyyy')**
           "@
-          
+
           $releaseNotes | Out-File -Encoding UTF8 "dist/RELEASE_NOTES.md"
 
       - name: "Upload Windows Artifacts"

@@ -25,7 +25,7 @@ if (-not $IsExecution -and -not $IsSimulation) {
   Write-Host "ATTENTION: Rollback d'urgence!" -ForegroundColor Red
   Write-Host "Modes disponibles:" -ForegroundColor Yellow
   Write-Host "  -WhatIf  : Test a blanc (recommande)" -ForegroundColor White
-  Write-Host "  -DryRun  : Simulation detaillee" -ForegroundColor White  
+  Write-Host "  -DryRun  : Simulation detaillee" -ForegroundColor White
   Write-Host "  -Execute : Execution reelle (DANGER!)" -ForegroundColor Red
   exit 1
 }

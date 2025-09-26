@@ -16,7 +16,7 @@ Write-Host "Workflow deploiement recommande:" -ForegroundColor Blue
 Write-Host "  1. .\tools\quick-pitfalls-check.ps1 -Version '0.1.5'" -ForegroundColor Yellow
 Write-Host "     -> Check rapide des pieges courants" -ForegroundColor Gray
 Write-Host ""
-Write-Host "  2. .\tools\check-go-nogo.ps1 -Version '0.1.5' -Detailed" -ForegroundColor Yellow  
+Write-Host "  2. .\tools\check-go-nogo.ps1 -Version '0.1.5' -Detailed" -ForegroundColor Yellow
 Write-Host "     -> Verification complete GO/NO-GO" -ForegroundColor Gray
 Write-Host ""
 Write-Host "  3. .\tools\deploy-first-public.ps1 -Version '0.1.5' -Execute" -ForegroundColor Yellow
@@ -32,7 +32,7 @@ Write-Host ""
 
 Write-Host "Documentation disponible:" -ForegroundColor Blue
 Write-Host "  - docs\RUNBOOK_EXPLOITATION.md" -ForegroundColor White
-Write-Host "  - docs\PLAYBOOK_GO_PUBLIC.md" -ForegroundColor White  
+Write-Host "  - docs\PLAYBOOK_GO_PUBLIC.md" -ForegroundColor White
 Write-Host "  - docs\RUNBOOK_FIRST_DEPLOYMENT.md" -ForegroundColor White
 Write-Host ""
 

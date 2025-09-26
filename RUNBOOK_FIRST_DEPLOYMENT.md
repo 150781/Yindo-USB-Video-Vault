@@ -213,7 +213,7 @@ choco install usbvideovault -source . --force
 
 ### Seuils critiques:
 - ✅ **Taux echec installation > 3%** → Rollback immediat
-- ✅ **Crashes recurrents au demarrage** → Rollback immediat  
+- ✅ **Crashes recurrents au demarrage** → Rollback immediat
 - ✅ **Probleme signature/certificat** → Rollback immediat
 - ✅ **SmartScreen bloque completement** → Investigation (pas forcement rollback)
 
@@ -235,14 +235,14 @@ choco install usbvideovault -source . --force
 
 ### 🔥 Piege #1: SHA256 mismatch
 **Symptome**: Winget/Chocolatey rejette installation
-**Solution**: 
+**Solution**:
 ```powershell
 # Recalculer SHA256 du binaire re-telecharge
 $correctHash = (Get-FileHash ".\USB Video Vault Setup 0.1.5.exe" -Algorithm SHA256).Hash
 # Mettre a jour manifests avec hash correct
 ```
 
-### 🔥 Piege #2: URL Winget incorrecte  
+### 🔥 Piege #2: URL Winget incorrecte
 **Symptome**: Winget telecharge HTML au lieu du .exe
 **Solution**:
 ```yaml
@@ -255,15 +255,15 @@ InstallerUrl: https://github.com/150781/Yindo-USB-Video-Vault/releases/download/
 
 ### 🔥 Piege #3: Signature sans timestamp
 **Symptome**: Signature expire avec certificat
-**Solution**: 
+**Solution**:
 ```bash
 # Ajouter timestamp dans workflow GitHub Actions
 signtool sign /f cert.pfx /p password /t http://timestamp.sectigo.com /fd SHA256 setup.exe
 ```
 
-### 🔥 Piege #4: SmartScreen panic  
+### 🔥 Piege #4: SmartScreen panic
 **Symptome**: "Tous les utilisateurs ont warnings SmartScreen"
-**Solution**: 
+**Solution**:
 - ✅ **Normal avec certificat OV nouveau** - Continue installations
 - ✅ **Reputation se construit** - 100-500 installs pour amelioration
 - ✅ **Communication proactive** - Documenter dans Release Notes
@@ -279,7 +279,7 @@ signtool sign /f cert.pfx /p password /t http://timestamp.sectigo.com /fd SHA256
 Windows may display a SmartScreen warning for new releases. This is expected behavior as our application builds its reputation with Microsoft's systems.
 
 ✅ **The executable is properly signed** with a valid Authenticode certificate
-✅ **Safe to install** - Click "More info" → "Run anyway"  
+✅ **Safe to install** - Click "More info" → "Run anyway"
 ✅ **Reputation improves** automatically with user installations
 
 This warning will disappear as more users install the signed version.

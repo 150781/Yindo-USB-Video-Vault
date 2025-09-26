@@ -1,0 +1,137 @@
+name: "Production Release"
+
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: 18
+          cache: npm
+          
+      - name: "Install & Build"
+        shell: pwsh
+        run: |
+          npm ci
+          npm run build
+          npm run build:main
+          npm run electron:build
+          
+      - name: "Generate SHA256SUMS (UNIX/ASCII format)"
+        shell: pwsh
+        run: |
+          # Generate checksums in proper UNIX format (no BOM, LF endings)
+          $lines = Get-ChildItem dist\*.exe | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "${hash}  $($_.Name)"
+          }
+          # Force ASCII encoding with Unix line endings
+          $lines -join "`n" | Out-File -Encoding ascii -NoNewline dist\SHA256SUMS
+          Add-Content -Path dist\SHA256SUMS -Value "`n" -Encoding ascii -NoNewline
+          
+          Write-Host "=== SHA256SUMS Generated ==="
+          Get-Content dist\SHA256SUMS | ForEach-Object { Write-Host $_ }
+          
+      - name: "Prepare Release Assets"
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path release-assets -Force
+          Copy-Item dist\*.exe release-assets\
+          Copy-Item dist\SHA256SUMS release-assets\
+          
+          # Generate release notes
+          $version = "${{ github.ref_name }}" -replace "^v", ""
+          $releaseNotes = @"
+          # USB Video Vault ${{ github.ref_name }}
+          
+          ## 📥 Installation
+          - **Setup (recommandé)** : ``USB Video Vault Setup $version.exe``
+          - **Version portable** : ``USB Video Vault $version.exe``
+          
+          ## ⚠️ Note Windows SmartScreen
+          Si Windows affiche un avertissement, cliquez sur "**Informations complémentaires**" puis "**Exécuter quand même**".
+          
+          ## 🔒 Vérification d'intégrité
+          ```bash
+          # Vérification des checksums
+          sha256sum -c SHA256SUMS
+          ```
+          
+          ## 🎉 Fonctionnalités
+          - Lecteur vidéo sécurisé avec chiffrement
+          - Interface moderne et intuitive
+          - Support de multiples formats vidéo
+          - Gestion des playlists
+          
+          ## 📞 Support
+          Pour toute question, ouvrez une [issue GitHub](https://github.com/150781/Yindo-USB-Video-Vault/issues).
+          
+          ---
+          **Build automatisé** • **Windows x64** • **$(Get-Date -Format 'dd/MM/yyyy')**
+          "@
+          
+          $releaseNotes | Out-File -Encoding UTF8 release-assets\RELEASE_NOTES.md
+          
+      - name: "Create GitHub Release"
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-assets/*
+          body_path: release-assets/RELEASE_NOTES.md
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-auto') || contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # SBOM optionnel (non bloquant)
+  sbom:
+    runs-on: windows-latest
+    needs: build-windows
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with: 
+          node-version: 18
+          cache: npm
+          
+      - name: "Generate SBOM (CycloneDX NPM)"
+        shell: pwsh
+        run: |
+          npm ci
+          npx @cyclonedx/bom -o sbom.json
+          
+      - name: "Upload SBOM to Release"
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sbom.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Notification de succès
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-windows]
+    if: always()
+    steps:
+      - name: "Status Report"
+        run: |
+          if [ "${{ needs.build-windows.result }}" == "success" ]; then
+            echo "🎉 Release ${{ github.ref_name }} created successfully!"
+            echo "📁 Windows executables uploaded"
+            echo "🔐 SHA256 checksums generated (UNIX format)"
+            echo "📄 Release notes included"
+          else
+            echo "❌ Release failed for ${{ github.ref_name }}"
+            echo "🔍 Check build logs for details"
+          fi

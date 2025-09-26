@@ -7,13 +7,13 @@ Write-Host "   .\tools\preflight-final.ps1 -Version 0.1.5" -ForegroundColor Yell
 Write-Host "   Verification: version lock, SHA256, signature, switches, rollback, assets" -ForegroundColor White
 Write-Host ""
 
-Write-Host "GO/NO-GO COMPLET:" -ForegroundColor Cyan  
+Write-Host "GO/NO-GO COMPLET:" -ForegroundColor Cyan
 Write-Host "   .\tools\check-go-nogo.ps1 -Version 0.1.5 -Detailed" -ForegroundColor Yellow
 Write-Host "   Verification: certificats, build, tests, manifests, documentation" -ForegroundColor White
 Write-Host ""
 
 Write-Host "DEPLOIEMENT AUTOMATISE:" -ForegroundColor Cyan
-Write-Host "   .\tools\deploy-first-public.ps1 -Version 0.1.5 -Execute" -ForegroundColor Yellow  
+Write-Host "   .\tools\deploy-first-public.ps1 -Version 0.1.5 -Execute" -ForegroundColor Yellow
 Write-Host "   Automation: pre-checks, GitHub release, post-deployment" -ForegroundColor White
 Write-Host ""
 
@@ -62,7 +62,7 @@ Write-Host ""
 
 Write-Host "VOUS ETES PRET POUR LE DEPLOIEMENT PUBLIC!" -ForegroundColor Green
 Write-Host "   Tous les garde-fous sont en place." -ForegroundColor White
-Write-Host "   Surveillance automatique configuree." -ForegroundColor White  
+Write-Host "   Surveillance automatique configuree." -ForegroundColor White
 Write-Host "   Rollback d urgence disponible." -ForegroundColor White
 Write-Host ""
 Write-Host "Commande unique pour tout lancer:" -ForegroundColor Blue

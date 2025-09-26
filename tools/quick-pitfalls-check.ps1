@@ -77,14 +77,14 @@ $secretsFile = ".github\workflows\release.yml"
 if (Test-Path $secretsFile) {
     $workflowContent = Get-Content $secretsFile -Raw
     $requiredSecrets = @("WINDOWS_CERT_BASE64", "WINDOWS_CERT_PASSWORD", "GITHUB_TOKEN")
-    
+
     $missingSecrets = @()
     foreach ($secret in $requiredSecrets) {
         if ($workflowContent -notmatch "secrets\.$secret") {
             $missingSecrets += $secret
         }
     }
-    
+
     if ($missingSecrets.Count -eq 0) {
         Write-Host "   ✅ Secrets référencés dans workflow" -ForegroundColor Green
         Write-Host "     (Verifier manuellement leur configuration sur GitHub)" -ForegroundColor Gray
@@ -218,7 +218,7 @@ if ($pitfalls.Count -eq 0) {
 
 Write-Host "`n💡 Actions suivantes recommandées:" -ForegroundColor Blue
 Write-Host "   1. .\tools\check-go-nogo.ps1 -Version '$Version' -Detailed" -ForegroundColor White
-Write-Host "   2. .\tools\final-vm-tests.ps1 (si disponible)" -ForegroundColor White  
+Write-Host "   2. .\tools\final-vm-tests.ps1 (si disponible)" -ForegroundColor White
 Write-Host "   3. .\tools\deploy-first-public.ps1 -Version '$Version'" -ForegroundColor White
 
 return $pitfalls.Count
