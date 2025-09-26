@@ -1,31 +1,4 @@
 name: "Production Release"
-
-on:
-  push:
-    tags: [ "v*" ]
-
-permissions:
-  contents: write
-
-jobs:
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: npm
-
-      - name: "Install & Build"
-        shell: pwsh
-        run: |
-          npm ci
-          npm run build
-          npm run build:main
-          npm run electron:build
-
       - name: "🖊️ Code Signing & SHA256SUMS"
         shell: pwsh
         env:
@@ -76,19 +49,44 @@ jobs:
 
           Write-Host "SHA256SUMS generated:"
           Get-Content dist\SHA256SUMS | ForEach-Object { Write-Host "  $_" -ForegroundColor White }
+    tags: [ "v*" ]
 
-      - name: "Optional SBOM Generation"
-        continue-on-error: true
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: "Install & Build"
         shell: pwsh
         run: |
-          Write-Host "=== SBOM GENERATION (OPTIONAL) ===" -ForegroundColor Blue
-          try {
-            npm install -g @cyclonedx/cdxgen
-            cdxgen -t js -o dist/sbom.json
-            Write-Host "SBOM generated successfully" -ForegroundColor Green
-          } catch {
-            Write-Host "SBOM generation failed (non-blocking): $($_.Exception.Message)" -ForegroundColor Yellow
+          npm ci
+          npm run build
+          npm run build:main
+          npm run electron:build
+
+      - name: "Generate SHA256SUMS (UNIX/ASCII format)"
+        shell: pwsh
+        run: |
+          # Generate checksums in proper UNIX format (no BOM, LF endings)
+          $lines = Get-ChildItem dist\*.exe | ForEach-Object {
+            $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower()
+            "${hash}  $($_.Name)"
           }
+          # Force ASCII encoding with Unix line endings
+          $lines -join "`n" | Out-File -Encoding ascii -NoNewline dist\SHA256SUMS
+          Add-Content -Path dist\SHA256SUMS -Value "`n" -Encoding ascii -NoNewline
+
+          Write-Host "=== SHA256SUMS Generated ==="
+          Get-Content dist\SHA256SUMS | ForEach-Object { Write-Host $_ }
 
       - name: "Prepare Release Assets"
         shell: pwsh
@@ -96,11 +94,6 @@ jobs:
           New-Item -ItemType Directory -Path release-assets -Force
           Copy-Item dist\*.exe release-assets\
           Copy-Item dist\SHA256SUMS release-assets\
-          
-          # Copy SBOM if generated
-          if (Test-Path dist\sbom.json) {
-            Copy-Item dist\sbom.json release-assets\
-          }
 
           # Generate release notes
           $version = "${{ github.ref_name }}" -replace "^v", ""
@@ -145,21 +138,47 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: "Notify Success"
+  # SBOM optionnel (non bloquant)
+  sbom:
+    runs-on: windows-latest
+    needs: build-windows
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: "Generate SBOM (CycloneDX NPM)"
         shell: pwsh
         run: |
-          $version = "${{ github.ref_name }}"
-          Write-Host "🎉 Production release $version created successfully!" -ForegroundColor Green
-          Write-Host "📁 Assets: Windows EXE files, SHA256SUMS, Release notes" -ForegroundColor Cyan
-          if (Test-Path dist\sbom.json) {
-            Write-Host "📋 SBOM: Generated and included" -ForegroundColor Cyan
-          } else {
-            Write-Host "📋 SBOM: Skipped (optional)" -ForegroundColor Yellow
-          }
-          
-          # Check if signed
-          if (-not [string]::IsNullOrEmpty("${{ secrets.WINDOWS_CERT_BASE64 }}")) {
-            Write-Host "🖊️ Code Signing: ENABLED" -ForegroundColor Green
-          } else {
-            Write-Host "🖊️ Code Signing: DISABLED (add WINDOWS_CERT_* secrets to enable)" -ForegroundColor Yellow
-          }
+          npm ci
+          npx @cyclonedx/bom -o sbom.json
+
+      - name: "Upload SBOM to Release"
+        if: success()
+        uses: softprops/action-gh-release@v2
+        with:
+          files: sbom.json
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Notification de succès
+  notify:
+    runs-on: ubuntu-latest
+    needs: [build-windows]
+    if: always()
+    steps:
+      - name: "Status Report"
+        run: |
+          if [ "${{ needs.build-windows.result }}" == "success" ]; then
+            echo "🎉 Release ${{ github.ref_name }} created successfully!"
+            echo "📁 Windows executables uploaded"
+            echo "🔐 SHA256 checksums generated (UNIX format)"
+            echo "📄 Release notes included"
+          else
+            echo "❌ Release failed for ${{ github.ref_name }}"
+            echo "🔍 Check build logs for details"
+          fi
